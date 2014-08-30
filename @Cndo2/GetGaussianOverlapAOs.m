@@ -35,15 +35,15 @@ elseif(valenceOrbitalA == OrbitalType.px && valenceOrbitalB == OrbitalType.px)
     value = value * temp;
 elseif(valenceOrbitalA == OrbitalType.px && valenceOrbitalB == OrbitalType.py)
     value = -4.0*gauMultAB*sqrt(gauMultAB);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * dx*dy;
 elseif(valenceOrbitalA == OrbitalType.px && valenceOrbitalB == OrbitalType.pz)
     value = -4.0*gauMultAB*sqrt(gauMultAB);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * dx*dz;
 elseif(valenceOrbitalA == OrbitalType.py && valenceOrbitalB == OrbitalType.px)
     value = -4.0*gauMultAB*sqrt(gauMultAB);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * dy*dx;
 elseif(valenceOrbitalA == OrbitalType.py && valenceOrbitalB == OrbitalType.py)
     temp = -1.0*(dy*dy)*gauMultAB;
@@ -54,15 +54,15 @@ elseif(valenceOrbitalA == OrbitalType.py && valenceOrbitalB == OrbitalType.py)
     value = value * temp;
 elseif(valenceOrbitalA == OrbitalType.py && valenceOrbitalB == OrbitalType.pz)
     value = -4.0*gauMultAB*sqrt(gauMultAB);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * dy*dz;
 elseif(valenceOrbitalA == OrbitalType.pz && valenceOrbitalB == OrbitalType.px)
     value = -4.0*gauMultAB*sqrt(gauMultAB);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * dz*dx;
 elseif(valenceOrbitalA == OrbitalType.pz && valenceOrbitalB == OrbitalType.py)
     value = -4.0*gauMultAB*sqrt(gauMultAB);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * dz*dy;
 elseif(valenceOrbitalA == OrbitalType.pz && valenceOrbitalB == OrbitalType.pz)
     temp = -1.0*(dz*dz)*gauMultAB;
@@ -73,32 +73,32 @@ elseif(valenceOrbitalA == OrbitalType.pz && valenceOrbitalB == OrbitalType.pz)
     value = value * temp;
 elseif(valenceOrbitalA == OrbitalType.dxy && valenceOrbitalB == OrbitalType.s)
     value = 4.0*gaussianExponentA;
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * gaussianExponentB*dx;
     value = value * gaussianExponentB*dy;
 elseif(valenceOrbitalA == OrbitalType.dyz && valenceOrbitalB == OrbitalType.s)
     value = 4.0*gaussianExponentA;
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * gaussianExponentB*dy;
     value = value * gaussianExponentB*dz;
 elseif(valenceOrbitalA == OrbitalType.dzx && valenceOrbitalB == OrbitalType.s)
     value = 4.0*gaussianExponentA;
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * gaussianExponentB*dz;
     value = value * gaussianExponentB*dx;
 elseif(valenceOrbitalA == OrbitalType.s && valenceOrbitalB == OrbitalType.dxy)
     value = 4.0*gaussianExponentB;
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * gaussianExponentA*dx;
     value = value * gaussianExponentA*dy;
 elseif(valenceOrbitalA == OrbitalType.s && valenceOrbitalB == OrbitalType.dyz)
     value = 4.0*gaussianExponentB;
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * gaussianExponentA*dy;
     value = value * gaussianExponentA*dz;
 elseif(valenceOrbitalA == OrbitalType.s && valenceOrbitalB == OrbitalType.dzx)
     value = 4.0*gaussianExponentB;
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * gaussianExponentA*dz;
     value = value * gaussianExponentA*dx;
 elseif(valenceOrbitalA == OrbitalType.dxy && valenceOrbitalB == OrbitalType.px)
@@ -211,19 +211,19 @@ elseif(valenceOrbitalA == OrbitalType.py && valenceOrbitalB == OrbitalType.dzx)
     value = value * gaussianExponentA*dz*gaussianExponentA*dx*gaussianExponentB*dy;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && valenceOrbitalB == OrbitalType.s)
     value = 2.0*gaussianExponentA;
-    value = value / gauPlusAB*gauPlusAB;
-    value = value * (gaussianExponentB*gaussianExponentB*dx*dx) - (gaussianExponentB*gaussianExponentB*dy*dy);
+    value = value / (gauPlusAB*gauPlusAB);
+    value = value * ((gaussianExponentB*gaussianExponentB*dx*dx) - (gaussianExponentB*gaussianExponentB*dy*dy));
     
 elseif(valenceOrbitalA == OrbitalType.s && valenceOrbitalB == OrbitalType.dxxyy)
     value = 2.0*gaussianExponentB;
-    value = value / gauPlusAB*gauPlusAB;
-    value = value * (gaussianExponentA*gaussianExponentA*dx*dx) - (gaussianExponentA*gaussianExponentA*dy*dy);
+    value = value / (gauPlusAB*gauPlusAB);
+    value = value * ((gaussianExponentA*gaussianExponentA*dx*dx) - (gaussianExponentA*gaussianExponentA*dy*dy));
     
 elseif(valenceOrbitalA == OrbitalType.dxxyy && valenceOrbitalB == OrbitalType.px)
     value = gaussianExponentB*dx;
     value = value - (gaussianExponentB*gaussianExponentB*dx*dx)*gaussianExponentA*dx/gauPlusAB;
     value = value + (gaussianExponentB*gaussianExponentB*dy*dy)*gaussianExponentA*dx/gauPlusAB;
-    value = value * -4.0*gaussianExponentA*sqrt(gaussianExponentB);
+    value = value * (-4.0*gaussianExponentA*sqrt(gaussianExponentB));
     value = value / (gauPlusAB*gauPlusAB);
     
 elseif(valenceOrbitalA == OrbitalType.px && valenceOrbitalB == OrbitalType.dxxyy)
@@ -243,7 +243,7 @@ elseif(valenceOrbitalA == OrbitalType.py && valenceOrbitalB == OrbitalType.dxxyy
     value = gaussianExponentA*dy;
     value = value + (gaussianExponentA*gaussianExponentA*dx*dx)*gaussianExponentB*dy/gauPlusAB;
     value = value - (gaussianExponentA*gaussianExponentA*dy*dy)*gaussianExponentB*dy/gauPlusAB;
-    value = value * -4.0*gaussianExponentB*sqrt(gaussianExponentA);
+    value = value * (-4.0*gaussianExponentB*sqrt(gaussianExponentA));
     value = value / (gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.dxxyy && valenceOrbitalB == OrbitalType.pz)
     value = (gaussianExponentB*gaussianExponentB*dx*dx) - (gaussianExponentB*gaussianExponentB*dy*dy);
@@ -253,21 +253,21 @@ elseif(valenceOrbitalA == OrbitalType.dxxyy && valenceOrbitalB == OrbitalType.pz
 elseif(valenceOrbitalA == OrbitalType.pz && valenceOrbitalB == OrbitalType.dxxyy)
     value = (gaussianExponentA*gaussianExponentA*dx*dx) - (gaussianExponentA*gaussianExponentA*dy*dy);
     value = value * gaussianExponentB*dz;
-    value = value * -4.0*gaussianExponentB*sqrt(gaussianExponentA);
+    value = value * (-4.0*gaussianExponentB*sqrt(gaussianExponentA));
     value = value / (gauPlusAB*gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.s)
     temp = 2.0*(gaussianExponentB*gaussianExponentB*dz*dz) ...
         -    (gaussianExponentB*gaussianExponentB*dx*dx) ...
         -    (gaussianExponentB*gaussianExponentB*dy*dy);
     value = 2.0*gaussianExponentA/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * temp;
 elseif(valenceOrbitalA == OrbitalType.s && valenceOrbitalB == OrbitalType.dzz)
     temp = 2.0*(gaussianExponentA*gaussianExponentA*dz*dz) ...
         -    (gaussianExponentA*gaussianExponentA*dx*dx) ...
         -    (gaussianExponentA*gaussianExponentA*dy*dy);
     value = 2.0*gaussianExponentB/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
     value = value * temp;
 elseif(valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.px)
     temp = gaussianExponentB*dx;
@@ -276,15 +276,15 @@ elseif(valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.px)
     temp = temp -     (gaussianExponentB*gaussianExponentB*dy*dy)*gaussianExponentA*dx/gauPlusAB;
     value = temp;
     value = value * 4.0*gaussianExponentA*sqrt(gaussianExponentB)/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.px && valenceOrbitalB == OrbitalType.dzz)
     temp = gaussianExponentA*dx;
     temp = temp + 2.0*(gaussianExponentA*gaussianExponentA*dz*dz)*gaussianExponentB*dx/gauPlusAB;
     temp = temp -     (gaussianExponentA*gaussianExponentA*dx*dx)*gaussianExponentB*dx/gauPlusAB;
     temp = temp -     (gaussianExponentA*gaussianExponentA*dy*dy)*gaussianExponentB*dx/gauPlusAB;
     value = temp;
-    value = value * -4.0*gaussianExponentB*sqrt(gaussianExponentA)/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value * (-4.0*gaussianExponentB*sqrt(gaussianExponentA)/sqrt(3.0));
+    value = value / (gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.py)
     temp = gaussianExponentB*dy;
     temp = temp + 2.0*(gaussianExponentB*gaussianExponentB*dz*dz)*gaussianExponentA*dy/gauPlusAB;
@@ -292,15 +292,15 @@ elseif(valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.py)
     temp = temp -     (gaussianExponentB*gaussianExponentB*dy*dy)*gaussianExponentA*dy/gauPlusAB;
     value = temp;
     value = value * 4.0*gaussianExponentA*sqrt(gaussianExponentB)/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.py && valenceOrbitalB == OrbitalType.dzz)
     temp = gaussianExponentA*dy;
     temp = temp + 2.0*(gaussianExponentA*gaussianExponentA*dz*dz)*gaussianExponentB*dy/gauPlusAB;
     temp = temp -     (gaussianExponentA*gaussianExponentA*dx*dx)*gaussianExponentB*dy/gauPlusAB;
     temp = temp -     (gaussianExponentA*gaussianExponentA*dy*dy)*gaussianExponentB*dy/gauPlusAB;
     value = temp;
-    value = value * -4.0*gaussianExponentB*sqrt(gaussianExponentA)/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value * (-4.0*gaussianExponentB*sqrt(gaussianExponentA)/sqrt(3.0));
+    value = value / (gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.pz)
     temp = -2.0*gaussianExponentB*dz;
     temp = temp + 2.0*(gaussianExponentB*gaussianExponentB*dz*dz)*gaussianExponentA*dz/gauPlusAB;
@@ -308,15 +308,15 @@ elseif(valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.pz)
     temp = temp -     (gaussianExponentB*gaussianExponentB*dy*dy)*gaussianExponentA*dz/gauPlusAB;
     value = temp;
     value = value * 4.0*gaussianExponentA*sqrt(gaussianExponentB)/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value / (gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.pz && valenceOrbitalB == OrbitalType.dzz)
     temp = -2.0*gaussianExponentA*dz;
     temp = temp + 2.0*(gaussianExponentA*gaussianExponentA*dz*dz)*gaussianExponentB*dz/gauPlusAB;
     temp = temp -     (gaussianExponentA*gaussianExponentA*dx*dx)*gaussianExponentB*dz/gauPlusAB;
     temp = temp -     (gaussianExponentA*gaussianExponentA*dy*dy)*gaussianExponentB*dz/gauPlusAB;
     value = temp;
-    value = value * -4.0*gaussianExponentB*sqrt(gaussianExponentA)/sqrt(3.0);
-    value = value / gauPlusAB*gauPlusAB;
+    value = value * (-4.0*gaussianExponentB*sqrt(gaussianExponentA)/sqrt(3.0));
+    value = value / (gauPlusAB*gauPlusAB);
 elseif(valenceOrbitalA == OrbitalType.dxy && valenceOrbitalB == OrbitalType.dxy)
     temp = 0.25;
     temp = temp - 0.5*gaussianExponentB*dx*gaussianExponentA*dx/gauPlusAB;
@@ -411,7 +411,7 @@ elseif((valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.dxy
     temp = temp * gauMultAB/gauPlusAB;
     temp = temp + 2.0*dx*dy;
     value = 8.0*(gaussianExponentA*gauMultAB*gaussianExponentB)*temp;
-    value = value / sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value / (sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB));
 elseif((valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.dyz) ||...
         (valenceOrbitalA == OrbitalType.dyz && valenceOrbitalB == OrbitalType.dzz))
     temp1 = -1.0*dy*dz;
@@ -419,7 +419,7 @@ elseif((valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.dyz
     temp2 = temp2 * gauMultAB/gauPlusAB;
     temp1 = temp1 +  temp2;
     value = 8.0*(gaussianExponentA*gauMultAB*gaussianExponentB)*temp1;
-    value = value / sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value / (sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB));
 elseif((valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.dzx) ||...
         (valenceOrbitalA == OrbitalType.dzx && valenceOrbitalB == OrbitalType.dzz))
     temp1 = -1.0*dx*dz;
@@ -427,14 +427,14 @@ elseif((valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.dzx
     temp2 = temp2 * gauMultAB/gauPlusAB;
     temp1 = temp1 +  temp2;
     value = 8.0*(gaussianExponentA*gauMultAB*gaussianExponentB)*temp1;
-    value = value / sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value / (sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB));
 elseif((valenceOrbitalA == OrbitalType.dxxyy && valenceOrbitalB == OrbitalType.dzz) ||...
         (valenceOrbitalA == OrbitalType.dzz && valenceOrbitalB == OrbitalType.dxxyy))
     temp = 2.0*(dz*dz)-(dx*dx)-(dy*dy);
     temp = temp * gauMultAB/gauPlusAB;
     temp = temp + 2.0;
     value = 4.0*(gaussianExponentA*gauMultAB*gaussianExponentB);
-    value = value / sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value / (sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * ((dx*dx)-(dy*dy))*temp;
 else
     throw(MException('Cndo2:GetGaussianOverlapAOs', 'Orbital type wrong.'));

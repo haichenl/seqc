@@ -135,7 +135,7 @@ elseif( (valenceOrbitalA == OrbitalType.px && axis == 2 && valenceOrbitalB == va
     temp1 = gaussianExponentA*xyzA(piDirection) - gaussianExponentA*xyzB(piDirection);
     temp2 = gaussianExponentB*xyzA(piDirection) - gaussianExponentB*xyzB(piDirection);
     value = 0.5 - temp1*temp2/gauPlusAB;
-    value = value * gaussianExponentA*xyzA(axis) + gaussianExponentB*xyzB(axis);
+    value = value * (gaussianExponentA*xyzA(axis) + gaussianExponentB*xyzB(axis));
     value = value * 4.0*sqrt(gauMultAB)/(gauPlusAB*gauPlusAB);
     value = value * overlapSASB;
 elseif( (valenceOrbitalA == OrbitalType.px && axis == 2 && valenceOrbitalB == OrbitalType.py) ||...
@@ -154,8 +154,8 @@ elseif( (valenceOrbitalA == OrbitalType.px && axis == 2 && valenceOrbitalB == Or
     temp1 = gaussianExponentA*xyzA(axis) + gaussianExponentB*xyzB(axis);
     temp2 = gaussianExponentA*xyzA(axis) - gaussianExponentA*xyzB(axis);
     value = 0.5 + temp1*temp2/gauPlusAB;
-    value = value * gaussianExponentB*xyzA(piDirectionA) - gaussianExponentB*xyzB(piDirectionA);
-    value = value * -4.0*sqrt(gauMultAB)/(gauPlusAB*gauPlusAB);
+    value = value * (gaussianExponentB*xyzA(piDirectionA) - gaussianExponentB*xyzB(piDirectionA));
+    value = value * (-4.0*sqrt(gauMultAB)/(gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
 elseif( (valenceOrbitalA == OrbitalType.py && axis == 2 && valenceOrbitalB == OrbitalType.px) ||...
         (valenceOrbitalA == OrbitalType.py && axis == 2 && valenceOrbitalB == OrbitalType.pz) ||...
@@ -173,7 +173,7 @@ elseif( (valenceOrbitalA == OrbitalType.py && axis == 2 && valenceOrbitalB == Or
     temp1 = gaussianExponentA*xyzA(axis) + gaussianExponentB*xyzB(axis);
     temp2 = gaussianExponentB*xyzA(axis) - gaussianExponentB*xyzB(axis);
     value = 0.5 - temp1*temp2/gauPlusAB;
-    value = value * gaussianExponentA*xyzA(piDirectionB) - gaussianExponentA*xyzB(piDirectionB);
+    value = value * (gaussianExponentA*xyzA(piDirectionB) - gaussianExponentA*xyzB(piDirectionB));
     value = value * 4.0*sqrt(gauMultAB)/(gauPlusAB*gauPlusAB);
     value = value * overlapSASB;
 elseif( (valenceOrbitalA == OrbitalType.px && axis == 2 && valenceOrbitalB == OrbitalType.pz) ||...
@@ -511,7 +511,7 @@ elseif(valenceOrbitalA == OrbitalType.py && axis == 2 && valenceOrbitalB == dxxy
     value = value + (gauMultAB*dxyz(2)...
         *gauMultAB*dxyz(2))...
         *((dxyz(2)*dxyz(2))-(dxyz(1)*dxyz(1)))/(gauPlusAB*gauPlusAB);
-    value = value * -4.0*sqrt(gaussianExponentA)*gaussianExponentB/(gauPlusAB*gauPlusAB);
+    value = value * (-4.0*sqrt(gaussianExponentA)*gaussianExponentB/(gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + xyzA(axis)*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 2 && valenceOrbitalB == OrbitalType.py)
@@ -529,7 +529,7 @@ elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 2 && valenceOrbitalB == O
     value = value + (gauMultAB*dxyz(2)...
         *gauMultAB*dxyz(2))...
         *((dxyz(2)*dxyz(2))-(dxyz(1)*dxyz(1)))/(gauPlusAB*gauPlusAB);
-    value = value * -4.0*sqrt(gaussianExponentB)*gaussianExponentA/(gauPlusAB*gauPlusAB);
+    value = value * (-4.0*sqrt(gaussianExponentB)*gaussianExponentA/(gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + xyzB(axis)*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.pz && axis == 3 && valenceOrbitalB == dxxyy)
@@ -862,7 +862,7 @@ elseif( (valenceOrbitalA == OrbitalType.dyz && axis == 1 && valenceOrbitalB == O
         rAB,...
         overlapSASB);
     value = 0.5-gauMultAB*dxyz(anotherAxis1)*dxyz(anotherAxis1)/gauPlusAB;
-    value = value * -8.0*(gaussianExponentB*gaussianExponentB)*gaussianExponentA*dxyz(anotherAxis2)/(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-8.0*(gaussianExponentB*gaussianExponentB)*gaussianExponentA*dxyz(anotherAxis2)/(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 1 && valenceOrbitalB == OrbitalType.dxy)
@@ -898,7 +898,7 @@ elseif(valenceOrbitalA == OrbitalType.dxy && axis == 1 && valenceOrbitalB == dxx
         -(gaussianExponentB*gaussianExponentB)*gaussianExponentA*(dxyz(1)*dxyz(1))/gauPlusAB...
         +(gaussianExponentA*gaussianExponentA)*gaussianExponentB...
         *((dxyz(1)*dxyz(1))-(dxyz(2)*dxyz(2)))/(2.0*gauPlusAB);
-    value = value * -8.0*gauMultAB*dxyz(2)/(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-8.0*gauMultAB*dxyz(2)/(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 2 && valenceOrbitalB == OrbitalType.dxy)
@@ -934,7 +934,7 @@ elseif(valenceOrbitalA == OrbitalType.dxy && axis == 2 && valenceOrbitalB == dxx
         +(gaussianExponentB*gaussianExponentB)*gaussianExponentA*(dxyz(2)*dxyz(2))/gauPlusAB...
         +(gaussianExponentA*gaussianExponentA)*gaussianExponentB...
         *((dxyz(1)*dxyz(1))-(dxyz(2)*dxyz(2)))/(2.0*gauPlusAB);
-    value = value * -8.0*gauMultAB*dxyz(1)/(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-8.0*gauMultAB*dxyz(1)/(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif( (valenceOrbitalA == OrbitalType.dxxyy && axis == 1 && valenceOrbitalB == OrbitalType.dyz) ||...
@@ -1008,7 +1008,7 @@ elseif(valenceOrbitalA == OrbitalType.dyz && axis == 2 && valenceOrbitalB == dxx
         +(gaussianExponentB*gaussianExponentB)*gaussianExponentA*(dxyz(2)*dxyz(2))/gauPlusAB...
         +(gaussianExponentA*gaussianExponentA)*gaussianExponentB...
         *((dxyz(1)*dxyz(1))-(dxyz(2)*dxyz(2)))/(2.0*gauPlusAB);
-    value = value * -8.0*gauMultAB*dxyz(3)/(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-8.0*gauMultAB*dxyz(3)/(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 1 && valenceOrbitalB == OrbitalType.dzx)
@@ -1026,7 +1026,7 @@ elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 1 && valenceOrbitalB == O
         +(gaussianExponentA*gaussianExponentA)*gaussianExponentB*(dxyz(1)*dxyz(1))/gauPlusAB...
         +(gaussianExponentB*gaussianExponentB)*gaussianExponentA...
         *((dxyz(2)*dxyz(2))-(dxyz(1)*dxyz(1)))/(2.0*gauPlusAB);
-    value = value * -8.0*gauMultAB*dxyz(3)/(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-8.0*gauMultAB*dxyz(3)/(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dzx && axis == 1 && valenceOrbitalB == dxxyy)
@@ -1074,7 +1074,7 @@ elseif(valenceOrbitalA == OrbitalType.dyz && axis == 3 && valenceOrbitalB == dxx
         rAB,...
         overlapSASB);
     value = gauMultAB*((dxyz(1)*dxyz(1))-(dxyz(2)*dxyz(2)))/gauPlusAB+1.0;
-    value = value * -4.0*gaussianExponentB*(gaussianExponentA*gaussianExponentA)*dxyz(2)/(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-4.0*gaussianExponentB*(gaussianExponentA*gaussianExponentA)*dxyz(2)/(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 3 && valenceOrbitalB == OrbitalType.dzx)
@@ -1089,7 +1089,7 @@ elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 3 && valenceOrbitalB == O
         rAB,...
         overlapSASB);
     value = gauMultAB*((dxyz(2)*dxyz(2))-(dxyz(1)*dxyz(1)))/gauPlusAB+1.0;
-    value = value * -4.0*gaussianExponentA*(gaussianExponentB*gaussianExponentB)*dxyz(1)/(gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-4.0*gaussianExponentA*(gaussianExponentB*gaussianExponentB)*dxyz(1)/(gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dzx && axis == 3 && valenceOrbitalB == dxxyy)
@@ -1123,7 +1123,7 @@ elseif( (valenceOrbitalA == OrbitalType.dzz && axis == 1 && valenceOrbitalB == O
     value = value * dxyz(1)*dxyz(2)*dxyz(3);
     value = value * 8.0*(gaussianExponentA*gaussianExponentA*gaussianExponentA*gaussianExponentA)...
         *(gaussianExponentB*gaussianExponentB*gaussianExponentB);
-    value = value / sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value / ((sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB)));
     value = value * overlapSASB;
     value = value + xyzB(axis)*overlapAOs1;
 elseif( (valenceOrbitalA == OrbitalType.dyz && axis == 1 && valenceOrbitalB == dzz) ||...
@@ -1140,8 +1140,8 @@ elseif( (valenceOrbitalA == OrbitalType.dyz && axis == 1 && valenceOrbitalB == d
         overlapSASB);
     value = 2.0*(dxyz(3)*dxyz(3)) - (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2));
     value = value * dxyz(1)*dxyz(2)*dxyz(3);
-    value = value * -8.0*(gaussianExponentB*gaussianExponentB*gaussianExponentB*gaussianExponentB)*(gaussianExponentA*gaussianExponentA*gaussianExponentA);
-    value = value / sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB);
+    value = value * (-8.0*(gaussianExponentB*gaussianExponentB*gaussianExponentB*gaussianExponentB)*(gaussianExponentA*gaussianExponentA*gaussianExponentA));
+    value = value / (sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB));
     value = value * overlapSASB;
     value = value + xyzA(axis)*overlapAOs1;
 elseif( (valenceOrbitalA == OrbitalType.dzz && axis == 1 && valenceOrbitalB == OrbitalType.dxy) ||...
@@ -1195,7 +1195,7 @@ elseif( (valenceOrbitalA == OrbitalType.dxy && axis == 1 && valenceOrbitalB == d
         *(2.0*(dxyz(3)*dxyz(3)) - (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2)))/(2.0*gauPlusAB)...
         +(gaussianExponentB*gaussianExponentB*gaussianExponentB)*(gaussianExponentA*gaussianExponentA)*(dxyz(axis)*dxyz(axis))...
         *(2.0*(dxyz(3)*dxyz(3)) - (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2)))/(gauPlusAB*gauPlusAB);
-    value = value * -8.0*gauMultAB*dxyz(anotherAxis)/(sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB));
+    value = value * (-8.0*gauMultAB*dxyz(anotherAxis)/(sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB)));
     value = value * overlapSASB;
     value = value + xyzA(axis)*overlapAOs1;
 elseif( (valenceOrbitalA == OrbitalType.dzz && axis == 2 && valenceOrbitalB == OrbitalType.dyz) ||...
@@ -1237,8 +1237,8 @@ elseif( (valenceOrbitalA == OrbitalType.dyz && axis == 2 && valenceOrbitalB == d
         +(gaussianExponentB*gaussianExponentB*gaussianExponentB)*(gaussianExponentA*gaussianExponentA*dxyz(axis)*dxyz(axis))...
         *(2.0*(dxyz(3)*dxyz(3)) - (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2)))...
         /(gauPlusAB*gauPlusAB);
-    value = value * -8.0*gauMultAB*dxyz(3)...
-        /(sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB));
+    value = value * (-8.0*gauMultAB*dxyz(3)...
+        /(sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB)));
     value = value * overlapSASB;
     value = value + xyzA(axis)*overlapAOs1;
 elseif( (valenceOrbitalA == OrbitalType.dzz && axis == 3 && valenceOrbitalB == OrbitalType.dyz) ||...
@@ -1294,8 +1294,8 @@ elseif( (valenceOrbitalA == OrbitalType.dyz && axis == 3 && valenceOrbitalB == d
         *(gaussianExponentA*gaussianExponentA*dxyz(axis)*dxyz(axis))...
         *(2.0*(dxyz(3)*dxyz(3)) - (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2)))...
         /(gauPlusAB*gauPlusAB);
-    value = value * -8.0*gauMultAB*dxyz(anotherAxis)...
-        /(sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB));
+    value = value * (-8.0*gauMultAB*dxyz(anotherAxis)...
+        /(sqrt(3.0)*(gauPlusAB*gauPlusAB*gauPlusAB)));
     value = value * overlapSASB;
     value = value + xyzA(axis)*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dzz && axis == 1 && valenceOrbitalB == dxxyy)
@@ -1333,7 +1333,7 @@ elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 1 && valenceOrbitalB == d
         *(2.0*(dxyz(3)*dxyz(3)) - (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2)))/gauPlusAB...
         +(gaussianExponentB*gaussianExponentB)*gaussianExponentA...
         *((dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2)))/gauPlusAB;
-    value = value * -4.0*gauMultAB*dxyz(1)/(gauPlusAB*gauPlusAB*gauPlusAB*sqrt(3.0));
+    value = value * (-4.0*gauMultAB*dxyz(1)/(gauPlusAB*gauPlusAB*gauPlusAB*sqrt(3.0)));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dzz && axis == 2 && valenceOrbitalB == dxxyy)
@@ -1352,7 +1352,7 @@ elseif(valenceOrbitalA == OrbitalType.dzz && axis == 2 && valenceOrbitalB == dxx
         *(2.0*(dxyz(3)*dxyz(3)) - (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2)))/gauPlusAB...
         +(gaussianExponentA*gaussianExponentA)*gaussianExponentB...
         *((dxyz(2)*dxyz(2)) - (dxyz(1)*dxyz(1)))/gauPlusAB;
-    value = value * -4.0*gauMultAB*dxyz(2)/(gauPlusAB*gauPlusAB*gauPlusAB*sqrt(3.0));
+    value = value * (-4.0*gauMultAB*dxyz(2)/(gauPlusAB*gauPlusAB*gauPlusAB*sqrt(3.0)));
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 2 && valenceOrbitalB == dzz)
@@ -1386,8 +1386,8 @@ elseif(valenceOrbitalA == OrbitalType.dzz && axis == 3 && valenceOrbitalB == dxx
         rAB,...
         overlapSASB);
     value = (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2));
-    value = value * -8.0*(gaussianExponentA*gaussianExponentA*gaussianExponentA)*(gaussianExponentB*gaussianExponentB)*dxyz(3);
-    value = value / sqrt(3.0)*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB;
+    value = value * (-8.0*(gaussianExponentA*gaussianExponentA*gaussianExponentA)*(gaussianExponentB*gaussianExponentB)*dxyz(3));
+    value = value / (sqrt(3.0)*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB);
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 3 && valenceOrbitalB == dzz)
@@ -1403,7 +1403,7 @@ elseif(valenceOrbitalA == OrbitalType.dxxyy && axis == 3 && valenceOrbitalB == d
         overlapSASB);
     value = (dxyz(1)*dxyz(1)) - (dxyz(2)*dxyz(2));
     value = value * 8.0*(gaussianExponentA*gaussianExponentA)*(gaussianExponentB*gaussianExponentB*gaussianExponentB)*dxyz(3);
-    value = value / sqrt(3.0)*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB;
+    value = value / (sqrt(3.0)*gauPlusAB*gauPlusAB*gauPlusAB*gauPlusAB);
     value = value * overlapSASB;
     value = value + axisAverage*overlapAOs1;
 else
