@@ -98,7 +98,7 @@ classdef Cndo2 < handle
             ycontainer = load('cndo2_y.mat', 'Y');
             obj.ReducedOverlapAOsParameters_Z = zcontainer.Z;
             obj.ReducedOverlapAOsParameters_Y = ycontainer.Y;
-            
+
         end
         
         function SetMolecule(obj, mol)
@@ -122,6 +122,13 @@ classdef Cndo2 < handle
             if(obj.theory == TheoryType.CNDO2 || obj.theory == TheoryType.INDO)
                 obj.gammaAB = zeros(length(obj.molecule.GetAtomVect()));
             end
+            
+            % calculate electron integral
+            obj.gammaAB = obj.CalcGammaAB(obj.molecule);
+            obj.overlapAOs = obj.CalcOverlapAOs(obj.molecule);
+%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(obj.molecule, STOnGType.STO6G);
+            [obj.twoElecsTwoAtomCores, obj.twoElecsAtomEpcCores] = obj.CalcTwoElecsTwoCores(obj.molecule);
+            
         end
         
         function DoSCF(obj)
@@ -135,12 +142,6 @@ classdef Cndo2 < handle
                 diisErrorProducts = zeros(diisNumErrorVect+1);
                 diisErrorCoefficients = zeros(diisNumErrorVect+1, 1);
             end
-            
-            % calculate electron integral
-            obj.gammaAB = obj.CalcGammaAB(obj.molecule);
-            obj.overlapAOs = obj.CalcOverlapAOs(obj.molecule);
-%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(obj.molecule, STOnGType.STO6G);
-            [obj.twoElecsTwoAtomCores, obj.twoElecsAtomEpcCores] = obj.CalcTwoElecsTwoCores(obj.molecule);
             
             % SCF
             maxIterationsSCF = Parameters.GetInstance().GetMaxIterationsSCF();
@@ -532,13 +533,13 @@ classdef Cndo2 < handle
             gammaAB = gammaAB + gammaAB' - diag(diag(gammaAB));
         end
         
-        function value = GetFockDiagElement(obj, atomA, indexAtomA, mu, molecule, ...
+        function value = GetFockDiagElement(~, atomA, indexAtomA, mu, molecule, ...
                 gammaAB, orbitalElectronPopulation, ...
                 atomicElectronPopulation, ~, isGuess)
             firstAOIndexA = atomA.GetFirstAOIndex();
-            value = atomA.GetCoreIntegral(atomA.GetValence(mu-firstAOIndexA+1), ...
+            value = atomA.GetCndo2CoreIntegral(atomA.GetValence(mu-firstAOIndexA+1), ...
                 gammaAB(indexAtomA, indexAtomA), ...
-                isGuess, obj.theory);
+                isGuess);
             if(~isGuess)
                 atomvect = molecule.GetAtomVect();
                 temp = atomicElectronPopulation(indexAtomA) ...
@@ -970,7 +971,7 @@ classdef Cndo2 < handle
                 end % end of loop mu
                 
                 % offdiag
-                for B = A:totalNumberAtoms
+                for B = A:totalNumberAtoms % upper part
                     atomB = atomvect{B};
                     firstAOIndexB = atomB.GetFirstAOIndex();
                     lastAOIndexB  = atomB.GetLastAOIndex();
