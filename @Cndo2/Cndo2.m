@@ -129,13 +129,11 @@ classdef Cndo2 < handle
             
             % Cndo2::MallocSCFTemporaryMatrices
             diisNumErrorVect = Parameters.GetInstance().GetDiisNumErrorVectSCF();
-            oldOrbitalElectronPopulation = zeros(obj.molecule.GetTotalNumberAOs());
             if(0<diisNumErrorVect)
-                diisStoredDensityMatrix = zeros(diisNumErrorVect, obj.molecule.GetTotalNumberAOs(), obj.molecule.GetTotalNumberAOs());
-                diisStoredErrorVect = zeros(diisNumErrorVect, obj.molecule.GetTotalNumberAOs(), obj.molecule.GetTotalNumberAOs());
+                diisStoredDensityMatrix = zeros(diisNumErrorVect, obj.molecule.GetTotalNumberAOs()* obj.molecule.GetTotalNumberAOs());
+                diisStoredErrorVect = zeros(diisNumErrorVect, obj.molecule.GetTotalNumberAOs()* obj.molecule.GetTotalNumberAOs());
                 diisErrorProducts = zeros(diisNumErrorVect+1);
-                tmpDiisErrorProducts = zeros(diisNumErrorVect+1);
-                diisErrorCoefficients = zeros(1, diisNumErrorVect+1);
+                diisErrorCoefficients = zeros(diisNumErrorVect+1, 1);
             end
             
             % calculate electron integral
@@ -146,16 +144,13 @@ classdef Cndo2 < handle
             
             % SCF
             maxIterationsSCF = Parameters.GetInstance().GetMaxIterationsSCF();
-            hasAppliedDIIS=false;
-            hasAppliedDamping=false;
-            diisError=0.0;
-            for iterationStep = 1:maxIterationsSCF
+            for iterationStep = 0:maxIterationsSCF-1
                 obj.atomicElectronPopulation = obj.CalcAtomicElectronPopulation(...
                     obj.orbitalElectronPopulation, ...
                     obj.molecule);
                 oldOrbitalElectronPopulation = obj.orbitalElectronPopulation;
                 
-                isGuess = (iterationStep==1 && requiresGuess);
+                isGuess = (iterationStep==0 && requiresGuess);
                 % continue here
                 obj.fockMatrix = obj.CalcFockMatrix(obj.molecule, ...
                     obj.overlapAOs, ...
@@ -177,23 +172,25 @@ classdef Cndo2 < handle
                 hasConverged = obj.SatisfyConvergenceCriterion(oldOrbitalElectronPopulation, ...
                     obj.orbitalElectronPopulation,...
                     obj.molecule.GetTotalNumberAOs());
+                
                 if(hasConverged)
                     obj.CalcSCFProperties();
                     break;
                 else
                     if(~isGuess)
-                        %                obj.DoDIIS(obj.orbitalElectronPopulation,
-                        %                             oldOrbitalElectronPopulation,
-                        %                             diisStoredDensityMatrix,
-                        %                             diisStoredErrorVect,
-                        %                             diisErrorProducts,
-                        %                             tmpDiisErrorProducts,
-                        %                             diisErrorCoefficients,
-                        %                             diisError,
-                        %                             hasAppliedDIIS,
-                        %                             Parameters::GetInstance()->GetDiisNumErrorVectSCF(),
-                        %                             *obj.molecule,
-                        %                             iterationStep);
+                        [obj.orbitalElectronPopulation, ...
+                            diisStoredDensityMatrix,...
+                            diisStoredErrorVect,...
+                            diisErrorProducts,...
+                            diisErrorCoefficients] = obj.DoDIIS(obj.orbitalElectronPopulation,...
+                            oldOrbitalElectronPopulation,...
+                            diisStoredDensityMatrix,...
+                            diisStoredErrorVect,...
+                            diisErrorProducts,...
+                            diisErrorCoefficients,...
+                            diisNumErrorVect,...
+                            obj.molecule,...
+                            iterationStep);
                         %                obj.DoDamp(rmsDensity,
                         %                             hasAppliedDamping,
                         %                             obj.orbitalElectronPopulation,
@@ -1080,18 +1077,65 @@ classdef Cndo2 < handle
         %                double** orbitalElectronPopulation,
         %                double const* const* oldOrbitalElectronPopulation,
         %                const MolDS_base::Molecule& molecule) const;
-        %    void DoDIIS(double** orbitalElectronPopulation,
-        %                double const* const* oldOrbitalElectronPopulation,
-        %                double*** diisStoredDensityMatrix,
-        %                double*** diisStoredErrorVect,
-        %                double**  diisErrorProducts,
-        %                double**  tmpDiisErrorProducts,
-        %                double*   diisErrorCoefficients,
-        %                double&   diisError,
-        %                bool&     hasAppliedDIIS,
-        %                int       diisNumErrorVect,
-        %                const MolDS_base::Molecule& molecule,
-        %                int step) const;
+        
+        function [orbitalElectronPopulation, ...
+                diisStoredDensityMatrix, ...
+                diisStoredErrorVect, ...
+                diisErrorProducts, ...
+                diisErrorCoefficients]...
+                = DoDIIS(~, orbitalElectronPopulation,...
+                oldOrbitalElectronPopulation,...
+                diisStoredDensityMatrix,...
+                diisStoredErrorVect,...
+                diisErrorProducts,...
+                diisErrorCoefficients,...
+                diisNumErrorVect,...
+                molecule,...
+                iterStep)
+            % diis start
+            totalNumberAOs = molecule.GetTotalNumberAOs();
+            diisStartError = Parameters.GetInstance().GetDiisStartErrorSCF();
+            diisEndError = Parameters.GetInstance().GetDiisEndErrorSCF();
+            
+            if( 0 < diisNumErrorVect)
+                diisStoredDensityMatrix(1:diisNumErrorVect-1, :) = diisStoredDensityMatrix(2:diisNumErrorVect, :);
+                diisStoredDensityMatrix(diisNumErrorVect, :) = 0*diisStoredDensityMatrix(diisNumErrorVect, :);
+                diisStoredErrorVect(1:diisNumErrorVect-1, :) = diisStoredErrorVect(2:diisNumErrorVect, :);
+                diisStoredErrorVect(diisNumErrorVect, :) = 0*diisStoredErrorVect(diisNumErrorVect, :);
+            end
+            
+            diisStoredDensityMatrix(diisNumErrorVect, :) = reshape(orbitalElectronPopulation, 1, totalNumberAOs*totalNumberAOs);
+            diisStoredErrorVect(diisNumErrorVect, :) = reshape(orbitalElectronPopulation - oldOrbitalElectronPopulation, 1, totalNumberAOs*totalNumberAOs);
+            
+            for mi = 1:diisNumErrorVect-1
+                for mj = 1:diisNumErrorVect-1
+                    diisErrorProducts(mi,mj) = diisErrorProducts(mi+1,mj+1);
+                end
+            end
+            
+            diisErrorProducts(diisNumErrorVect, 1:end-1) = diisStoredErrorVect * diisStoredErrorVect(diisNumErrorVect,:)';
+            
+            for mi = 1:diisNumErrorVect
+                diisErrorProducts(mi,diisNumErrorVect) = diisErrorProducts(diisNumErrorVect,mi);
+                diisErrorProducts(mi,diisNumErrorVect+1) = -1.0;
+                diisErrorProducts(diisNumErrorVect+1,mi) = -1.0;
+                diisErrorCoefficients(mi) = 0.0;
+            end
+            
+            diisErrorProducts(diisNumErrorVect+1,diisNumErrorVect+1) = 0.0;
+            diisErrorCoefficients(diisNumErrorVect+1) = -1.0;
+            diisError = max(abs(diisStoredErrorVect(diisNumErrorVect,:)));
+            if(diisNumErrorVect <= iterStep && diisEndError<diisError && diisError<diisStartError)
+                tmpDiisErrorProducts = diisErrorProducts;
+%                 if(abs(det(tmpDiisErrorProducts)) < 1e-12)
+%                     hasAppliedDIIS = false;
+%                     continue;
+%                 end
+                diisErrorCoefficients = tmpDiisErrorProducts \ diisErrorCoefficients;
+                orbitalElectronPopulation = reshape(diisStoredDensityMatrix' * diisErrorCoefficients(1:end-1), totalNumberAOs, totalNumberAOs);
+            end
+            % diis end
+        end
         
         function CheckEnableAtomType(obj, molecule)
             for i = 1:length(molecule.GetAtomVect())
