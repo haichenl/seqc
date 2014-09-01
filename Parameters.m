@@ -155,6 +155,11 @@ classdef (Sealed) Parameters < handle
                 obj.vdWDampingFactorSCF = vdWDamp;
             end
         end
+        
+        function res = GetCurrentTheory(obj)
+            res = obj.currentTheory;
+        end
+        
     end
     
     methods (Access = private)

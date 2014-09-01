@@ -7,6 +7,8 @@ classdef AtomFactory < handle
                 atom = HAtom(index);
             elseif(atomType == AtomType.C)
                 atom = CAtom(index);
+            elseif(atomType == AtomType.Cl)
+                atom = ClAtom(index);
             else
                 throw(MException('AtomFactory:Create', 'Atom type not implemented yet.'));
             end

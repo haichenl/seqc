@@ -302,7 +302,7 @@ classdef Cndo2 < handle
         
         function value = GetBondingAdjustParameterK(obj, shellA, shellB)
              value=1.0;
-             if(shellA >= ShellType.mShell || shellB >= ShellType.mShell)
+             if(double(shellA) >= double(ShellType.mShell) || double(shellB) >= double(ShellType.mShell))
                  value = obj.bondingAdjustParameterK(2); % notice c++->matlab index conversion
              end
         end
@@ -561,7 +561,7 @@ classdef Cndo2 < handle
                 indexAtomA, indexAtomB, mu, nu, ~, gammaAB, ... 
                 overlapAOs, orbitalElectronPopulation, ~, isGuess)
             K = obj.GetBondingAdjustParameterK(atomA.GetValenceShellType(), atomB.GetValenceShellType());
-            bondParameter = 0.5*K*(atomA.GetBondingParameter() + atomB.GetBondingParameter());
+            bondParameter = 0.5*K*(atomA.GetCndo2BondingParameter() + atomB.GetCndo2BondingParameter());
             value =  bondParameter*overlapAOs(mu, nu);
             if(~isGuess)
                 value = value - 0.5*orbitalElectronPopulation(mu, nu)*gammaAB(indexAtomA, indexAtomB);
@@ -1024,10 +1024,12 @@ classdef Cndo2 < handle
         
         function value = GetAuxiliaryA(~, k, rho)
             tmp1 = 0.0;
-            value = exp(-1.0*rho)*factorial(k);
+%             value = exp(-1.0*rho)*factorial(k);
+            value = exp(-1.0*rho);
             for mu = 1:k+1
                 tmp2=rho^mu; % tmp2 = pow(rho,mu)
-                tmp1 = tmp1 + 1.0/(tmp2*factorial(k-mu+1));
+%                 tmp1 = tmp1 + 1.0/(tmp2*factorial(k-mu+1));
+                tmp1 = tmp1 + 1.0/(tmp2/prod(k-mu+2:k));
             end
             value = value * tmp1;
         end
@@ -1044,8 +1046,10 @@ classdef Cndo2 < handle
                     if(mod((k-mu),2)==0)
                         tmp4=1.0;
                     end
-                    tmp1 = tmp1 + factorial(k)/factorial(k-mu+1)     /tmp3;
-                    tmp2 = tmp2 + factorial(k)/factorial(k-mu+1)*tmp4/tmp3;
+%                     tmp1 = tmp1 + factorial(k)/factorial(k-mu+1)     /tmp3;
+%                     tmp2 = tmp2 + factorial(k)/factorial(k-mu+1)*tmp4/tmp3;
+                    tmp1 = tmp1 + prod(k-mu+2:k)     /tmp3;
+                    tmp2 = tmp2 + prod(k-mu+2:k)*tmp4/tmp3;
                 end
                 value = pre1*tmp1 + pre2*tmp2;
             else

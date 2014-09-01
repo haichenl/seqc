@@ -285,6 +285,10 @@ classdef Atom < handle
             end
         end
         
+        function res = GetCndo2BondingParameter(obj)
+            res = obj.bondingParameter;
+        end
+        
         function res = GetOrbitalExponent(obj, shellType, orbitalType, theory) % ShellType shellType, OrbitalType orbitalType, TheoryType theory
             if(theory == TheoryType.CNDO2 || theory == TheoryType.INDO || theory == TheoryType.ZINDOS)
                 if(shellType == ShellType.kShell && orbitalType == OrbitalType.s)
@@ -358,9 +362,29 @@ classdef Atom < handle
             end
         end
         
+        function res = GetCndo2CoreIntegral(obj, orbital, gamma, isGuess) % OrbitalType orbital
+            orbital = double(orbital);
+            if(orbital == 1)
+                res = -1.0*obj.imuAmuS;
+            elseif(orbital == 4 || orbital == 2 || orbital == 3)
+                res = -1.0*obj.imuAmuP;
+            elseif(orbital == 5 || ...
+                    orbital == 6 || ...
+                    orbital == 7 || ...
+                    orbital == 8 || ...
+                    orbital == 9 )
+                res = -1.0*obj.imuAmuD;
+            else
+                throw(MException('Atom:GetCndo2CoreIntegral', 'CNDO2 Orbital type wrong.'));
+            end
+            if(~isGuess)
+                res = res - (obj.coreCharge - 0.5)*gamma;
+            end
+        end
+        
         % todo: complete other theories
         function value = GetCoreIntegral(obj, orbital, gamma, isGuess, theory)
-            if(theory == TheoryType.CNDO2)
+            if(double(theory) == double(TheoryType.CNDO2))
                 value = obj.GetCndo2CoreIntegral(orbital, gamma, isGuess);
             else
                 throw(MException('Atom:GetCoreIntegral', 'Not implemented for this theory yet.'));
@@ -415,25 +439,6 @@ classdef Atom < handle
             temp1 = power(2.0*orbitalExponent,principalQuantumNumber+0.5);
             temp2 = power(factorial(2*principalQuantumNumber),-0.5);
             res = temp1*temp2*power(dr,principalQuantumNumber-1)*exp(-1.0*orbitalExponent*dr);
-        end
-        
-        function res = GetCndo2CoreIntegral(obj, orbital, gamma, isGuess) % OrbitalType orbital
-            if(orbital == OrbitalType.s)
-                res = -1.0*obj.imuAmuS;
-            elseif(orbital == OrbitalType.px || orbital == OrbitalType.py || orbital == OrbitalType.pz)
-                res = -1.0*obj.imuAmuP;
-            elseif(orbital == OrbitalType.dxy || ...
-                    orbital == OrbitalType.dyz || ...
-                    orbital == OrbitalType.dzz || ...
-                    orbital == OrbitalType.dzx || ...
-                    orbital == OrbitalType.dxxyy )
-                res = -1.0*obj.imuAmuD;
-            else
-                throw(MException('Atom:GetCndo2CoreIntegral', 'CNDO2 Orbital type wrong.'));
-            end
-            if(~isGuess)
-                res = res - (obj.coreCharge - 0.5)*gamma;
-            end
         end
         
     end

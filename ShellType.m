@@ -1,9 +1,9 @@
 classdef ShellType < double
-   enumeration
-       kShell(1)
-       lShell(2)
-       mShell(3)
-       nShell(4)
-       ShellType_end(5)
-   end
+    enumeration
+        kShell(1)
+        lShell(2)
+        mShell(3)
+        nShell(4)
+        ShellType_end(5)
+    end
 end
