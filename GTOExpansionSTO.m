@@ -10,29 +10,47 @@ classdef (Sealed) GTOExpansionSTO < handle
     methods (Access = public)
         
         function res = GetExponent(obj, stonG, shellType, orbitalType, index)
-            if(orbitalType == OrbitalType.s)
-                azimuthalType = AzimuthalType.sAzimuthal;
-            elseif(orbitalType == OrbitalType.px || orbitalType == OrbitalType.py ||orbitalType == OrbitalType.pz )
-                azimuthalType = AzimuthalType.pAzimuthal;
-            elseif(orbitalType == OrbitalType.dxy || orbitalType == OrbitalType.dyz ||orbitalType == OrbitalType.dzz || orbitalType == OrbitalType.dzx ||orbitalType == OrbitalType.dxxyy )
-                azimuthalType = AzimuthalType.dAzimuthal;
+%             if(orbitalType == OrbitalType.s)
+%                 azimuthalType = AzimuthalType.sAzimuthal;
+%             elseif(orbitalType == OrbitalType.px || orbitalType == OrbitalType.py ||orbitalType == OrbitalType.pz )
+%                 azimuthalType = AzimuthalType.pAzimuthal;
+%             elseif(orbitalType == OrbitalType.dxy || orbitalType == OrbitalType.dyz ||orbitalType == OrbitalType.dzz || orbitalType == OrbitalType.dzx ||orbitalType == OrbitalType.dxxyy )
+%                 azimuthalType = AzimuthalType.dAzimuthal;
+%             else
+%                 throw(MException('GTOExpansionSTO:GetExponent', 'Orbital type wrong.'));
+%             end
+            if(orbitalType == 1)
+                azimuthalType = 1;
+            elseif(orbitalType == 4 || orbitalType == 2 ||orbitalType == 3 )
+                azimuthalType = 2;
+            elseif(orbitalType == 5 || orbitalType == 6 ||orbitalType == 7 || orbitalType == 8 ||orbitalType == 9 )
+                azimuthalType = 3;
             else
                 throw(MException('GTOExpansionSTO:GetExponent', 'Orbital type wrong.'));
             end
-            res = obj.exponents(double(stonG), double(shellType), double(azimuthalType), double(index));
+            res = obj.exponents(stonG, shellType, azimuthalType, index);
         end
         
         function res = GetCoefficient(obj, stonG, shellType, orbitalType, index)
-            if(orbitalType == OrbitalType.s)
-                azimuthalType = AzimuthalType.sAzimuthal;
-            elseif(orbitalType == OrbitalType.px || orbitalType == OrbitalType.py ||orbitalType == OrbitalType.pz )
-                azimuthalType = AzimuthalType.pAzimuthal;
-            elseif(orbitalType == OrbitalType.dxy || orbitalType == OrbitalType.dyz ||orbitalType == OrbitalType.dzz || orbitalType == OrbitalType.dzx ||orbitalType == OrbitalType.dxxyy )
-                azimuthalType = AzimuthalType.dAzimuthal;
+%             if(orbitalType == OrbitalType.s)
+%                 azimuthalType = AzimuthalType.sAzimuthal;
+%             elseif(orbitalType == OrbitalType.px || orbitalType == OrbitalType.py ||orbitalType == OrbitalType.pz )
+%                 azimuthalType = AzimuthalType.pAzimuthal;
+%             elseif(orbitalType == OrbitalType.dxy || orbitalType == OrbitalType.dyz ||orbitalType == OrbitalType.dzz || orbitalType == OrbitalType.dzx ||orbitalType == OrbitalType.dxxyy )
+%                 azimuthalType = AzimuthalType.dAzimuthal;
+%             else
+%                 throw(MException('GTOExpansionSTO:GetCoefficient', 'Orbital type wrong.'));
+%             end
+            if(orbitalType == 1)
+                azimuthalType = 1;
+            elseif(orbitalType == 4 || orbitalType == 2 ||orbitalType == 3 )
+                azimuthalType = 2;
+            elseif(orbitalType == 5 || orbitalType == 6 ||orbitalType == 7 || orbitalType == 8 ||orbitalType == 9 )
+                azimuthalType = 3;
             else
                 throw(MException('GTOExpansionSTO:GetCoefficient', 'Orbital type wrong.'));
             end
-            res = obj.coefficients(double(stonG), double(shellType), double(azimuthalType), double(index));
+            res = obj.coefficients(stonG, shellType, azimuthalType, index);
         end
         
     end

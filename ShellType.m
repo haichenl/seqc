@@ -1,4 +1,4 @@
-classdef ShellType < double
+classdef ShellType < uint8
     enumeration
         kShell(1)
         lShell(2)

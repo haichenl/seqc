@@ -19,17 +19,17 @@ classdef EulerAngle < handle
             obj.gamma = 0;
         end
         
-        function res = GetAlpha(obj)
-            res = obj.alpha;
-        end
-        
-        function res = GetBeta(obj)
-            res = obj.beta;
-        end
-        
-        function res = GetGamma(obj)
-            res = obj.gamma;
-        end
+%         function res = GetAlpha(obj)
+%             res = obj.alpha;
+%         end
+%         
+%         function res = GetBeta(obj)
+%             res = obj.beta;
+%         end
+%         
+%         function res = GetGamma(obj)
+%             res = obj.gamma;
+%         end
         
         function SetAlpha(obj, alpha_in)
             obj.alpha = alpha_in;

@@ -1,4 +1,4 @@
-classdef AzimuthalType < double
+classdef AzimuthalType < uint8
     enumeration
         sAzimuthal(1)
         pAzimuthal(2)

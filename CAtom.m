@@ -16,13 +16,18 @@ classdef CAtom < Atom
             obj.atomicMass = 12.0107*Parameters.GetInstance().GetGMolin2AU();
             obj.coreCharge = 4.0;
             obj.numberValenceElectrons = 4;
-            obj.valenceShellType = ShellType.lShell;
-            obj.valence{1} = OrbitalType.s;
-            obj.valence{2} = OrbitalType.py;
-            obj.valence{3} = OrbitalType.pz;
-            obj.valence{4} = OrbitalType.px;
+%             obj.valenceShellType = ShellType.lShell;
+            obj.valenceShellType = 2;
+%             obj.valence{1} = OrbitalType.s;
+%             obj.valence{2} = OrbitalType.py;
+%             obj.valence{3} = OrbitalType.pz;
+%             obj.valence{4} = OrbitalType.px;
+            obj.valence(1) = 1;
+            obj.valence(2) = 2;
+            obj.valence(3) = 3;
+            obj.valence(4) = 4;
             for i=1:length(obj.valence)
-                obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence{i});
+                obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence(i));
             end
             obj.vdWCoefficient = 1.65*Parameters.GetInstance().GetJ2AU()...
                 *power(Parameters.GetInstance().GetNm2AU(),6.0)...

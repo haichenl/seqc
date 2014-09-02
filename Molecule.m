@@ -20,13 +20,13 @@ classdef Molecule < handle
         function obj = Molecule()
         end
         
-        function res = GetAtomVect(obj)
-            res = obj.atomVect;
-        end
-        
-        function res = GetEpcVect(obj)
-            res = obj.epcVect;
-        end
+%         function res = GetAtomVect(obj)
+%             res = obj.atomVect;
+%         end
+%         
+%         function res = GetEpcVect(obj)
+%             res = obj.epcVect;
+%         end
         
         function AddAtom(obj, atom)
             obj.atomVect{end+1} = atom;
@@ -36,13 +36,13 @@ classdef Molecule < handle
             obj.epcVect{end+1} = epc;
         end
         
-        function res = GetXyzCOM(obj)
-            res = obj.xyzCOM;
-        end
-        
-        function res = GetXyzCOC(obj)
-            res = obj.xyzCOC;
-        end
+%         function res = GetXyzCOM(obj)
+%             res = obj.xyzCOM;
+%         end
+%         
+%         function res = GetXyzCOC(obj)
+%             res = obj.xyzCOC;
+%         end
         
         function res = GetXyzDipoleCenter(obj)
             res = obj.xyzCOC;
@@ -63,17 +63,17 @@ classdef Molecule < handle
             obj.CalcDistanceAtomsEpcs();
         end
         
-        function res = GetTotalNumberAOs(obj)
-            res = obj.totalNumberAOs;
-        end
+%         function res = GetTotalNumberAOs(obj)
+%             res = obj.totalNumberAOs;
+%         end
         
-        function res = GetTotalNumberValenceElectrons(obj)
-            res = obj.totalNumberValenceElectrons;
-        end
+%         function res = GetTotalNumberValenceElectrons(obj)
+%             res = obj.totalNumberValenceElectrons;
+%         end
         
-        function res = GetTotalCoreMass(obj)
-            res = obj.totalCoreMass;
-        end
+%         function res = GetTotalCoreMass(obj)
+%             res = obj.totalCoreMass;
+%         end
         
         function [inertiaMoments, inertiaTensor] = CalcPrincipalAxes(obj)
             obj.CalcXyzCOM();
@@ -87,8 +87,8 @@ classdef Molecule < handle
                 indexAtomA = arg1;
                 indexAtomB = arg2;
             elseif(isa(arg1, 'Atom') && isa(arg2, 'Atom'))
-                indexAtomA = arg1.GetIndex();
-                indexAtomB = arg2.GetIndex();
+                indexAtomA = arg1.index;
+                indexAtomB = arg2.index;
             else
                 throw(MException('Molecule:GetDistanceAtoms', 'Input argument type wrong.'));
             end
@@ -100,8 +100,8 @@ classdef Molecule < handle
                 indexEpcA = arg1;
                 indexEpcB = arg2;
             elseif(isa(arg1, 'Atom') && isa(arg2, 'Atom'))
-                indexEpcA = arg1.GetIndex();
-                indexEpcB = arg2.GetIndex();
+                indexEpcA = arg1.index;
+                indexEpcB = arg2.index;
             else
                 throw(MException('Molecule:GetDistanceEpcs', 'Input argument type wrong.'));
             end
@@ -113,8 +113,8 @@ classdef Molecule < handle
                 indexAtom = arg1;
                 indexEpc = arg2;
             elseif(isa(arg1, 'Atom') && isa(arg2, 'Atom'))
-                indexAtom = arg1.GetIndex();
-                indexEpc = arg2.GetIndex();
+                indexAtom = arg1.index;
+                indexEpc = arg2.index;
             else
                 throw(MException('Molecule:GetDistanceAtomEpc', 'Input argument type wrong.'));
             end
@@ -136,15 +136,14 @@ classdef Molecule < handle
         function CalcTotalNumberValenceElectrons(obj)
             obj.totalNumberValenceElectrons = 0;
             for i = 1:length(obj.atomVect)
-                obj.totalNumberValenceElectrons = obj.totalNumberValenceElectrons + obj.atomVect{i}.GetNumberValenceElectrons();
+                obj.totalNumberValenceElectrons = obj.totalNumberValenceElectrons + obj.atomVect{i}.numberValenceElectrons;
             end
         end
         
         function CalcTotalCoreMass(obj)
             obj.totalCoreMass = 0; 
             for i = 1:length(obj.atomVect)
-                coreMass = obj.atomVect{i}.GetCoreMass();
-                obj.totalCoreMass = obj.totalCoreMass + coreMass;
+                obj.totalCoreMass = obj.totalCoreMass + obj.atomVect{i}.GetCoreMass();
             end
         end
         
@@ -152,8 +151,8 @@ classdef Molecule < handle
             totalAtomicMass = 0.0;
             obj.xyzCOM = zeros(1, 3);
             for i = 1:length(obj.atomVect)
-                atomicXyz = obj.atomVect{i}.GetXyz();
-                atomicMass = obj.atomVect{i}.GetAtomicMass();
+                atomicXyz = obj.atomVect{i}.xyz;
+                atomicMass = obj.atomVect{i}.atomicMass;
                 totalAtomicMass = totalAtomicMass + atomicMass;
                 obj.xyzCOM = obj.xyzCOM + atomicXyz .* atomicMass;
             end
@@ -164,7 +163,7 @@ classdef Molecule < handle
             totalCoreMass_ = 0.0;
             obj.xyzCOC = zeros(1, 3);
             for i = 1:length(obj.atomVect)
-                atomicXyz = obj.atomVect{i}.GetXyz();
+                atomicXyz = obj.atomVect{i}.xyz;
                 coreMass = obj.atomVect{i}.GetCoreMass();
                 totalCoreMass_ = totalCoreMass_ + coreMass;
                 obj.xyzCOC = obj.xyzCOC + atomicXyz .* coreMass;
@@ -177,7 +176,7 @@ classdef Molecule < handle
                 atomA = obj.atomVect{a};
                 for b = a:length(obj.atomVect)
                     atomB = obj.atomVect{b};
-                    obj.distanceAtoms(a, b) = norm(atomA.GetXyz() - atomB.GetXyz());
+                    obj.distanceAtoms(a, b) = norm(atomA.xyz - atomB.xyz);
                 end
             end
             obj.distanceAtoms = obj.distanceAtoms + obj.distanceAtoms' - diag(diag(obj.distanceAtoms));
@@ -188,7 +187,7 @@ classdef Molecule < handle
                 epcA = obj.epcVect{a};
                 for b = a:length(obj.epcVect)
                     epcB = obj.epcVect{b};
-                    obj.distanceEpcs(a, b) = norm(epcA.GetXyz() - epcB.GetXyz());
+                    obj.distanceEpcs(a, b) = norm(epcA.xyz - epcB.xyz);
                 end
             end
             obj.distanceEpcs = obj.distanceEpcs + obj.distanceEpcs' - diag(diag(obj.distanceEpcs));
@@ -199,7 +198,7 @@ classdef Molecule < handle
                 atom = obj.atomVect{a};
                 for b = 1:length(obj.epcVect)
                     epc = obj.epcVect{b};
-                    obj.distanceAtomsEpcs(a, b) = norm(atom.GetXyz() - epc.GetXyz());
+                    obj.distanceAtomsEpcs(a, b) = norm(atom.xyz - epc.xyz);
                 end
             end
         end
@@ -207,8 +206,8 @@ classdef Molecule < handle
         function inertiaTensor = CalcInertiaTensor(obj, inertiaTensorOrigin)
             inertiaTensor = zeros(3, 3);
             for a = 1:length(obj.atomVect)
-                atomicMass = obj.atomVect{a}.GetAtomicMass();
-                xyz = obj.atomVect{a}.GetXyz();
+                atomicMass = obj.atomVect{a}.atomicMass;
+                xyz = obj.atomVect{a}.xyz;
                 x = xyz(1) - inertiaTensorOrigin(1);
                 y = xyz(2) - inertiaTensorOrigin(2);
                 z = xyz(3) - inertiaTensorOrigin(3);

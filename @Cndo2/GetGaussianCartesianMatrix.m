@@ -5,8 +5,8 @@ function value = GetGaussianCartesianMatrix(obj, ...
 gauPlusAB = gaussianExponentA+gaussianExponentB;
 gauMultAB = gaussianExponentA*gaussianExponentB;
 dxyz = xyzA - xyzB;
-valenceOrbitalA = double(valenceOrbitalA);
-valenceOrbitalB = double(valenceOrbitalB);
+% valenceOrbitalA = double(valenceOrbitalA);
+% valenceOrbitalB = double(valenceOrbitalB);
 if(valenceOrbitalA == 1 && valenceOrbitalB == 1)
     value = gaussianExponentA*xyzA(axis) + gaussianExponentB*xyzB(axis);
     value = value / gauPlusAB;

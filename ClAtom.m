@@ -16,20 +16,30 @@ classdef ClAtom < Atom
             obj.atomicMass = 35.453*Parameters.GetInstance().GetGMolin2AU();
             obj.coreCharge = 7.0;
             obj.numberValenceElectrons = 7;
-            obj.valenceShellType = ShellType.mShell;
-            obj.valence{1} = OrbitalType.s;
-            obj.valence{2} = OrbitalType.py;
-            obj.valence{3} = OrbitalType.pz;
-            obj.valence{4} = OrbitalType.px;
+%             obj.valenceShellType = ShellType.mShell;
+            obj.valenceShellType = 3;
+%             obj.valence{1} = OrbitalType.s;
+%             obj.valence{2} = OrbitalType.py;
+%             obj.valence{3} = OrbitalType.pz;
+%             obj.valence{4} = OrbitalType.px;
+            obj.valence(1) = 1;
+            obj.valence(2) = 2;
+            obj.valence(3) = 3;
+            obj.valence(4) = 4;
             if(Parameters.GetInstance().GetCurrentTheory() == TheoryType.CNDO2)
-                obj.valence{5} = OrbitalType.dxy;
-                obj.valence{6} = OrbitalType.dyz;
-                obj.valence{7} = OrbitalType.dzz;
-                obj.valence{8} = OrbitalType.dzx;
-                obj.valence{9} = OrbitalType.dxxyy;
+%                 obj.valence{5} = OrbitalType.dxy;
+%                 obj.valence{6} = OrbitalType.dyz;
+%                 obj.valence{7} = OrbitalType.dzz;
+%                 obj.valence{8} = OrbitalType.dzx;
+%                 obj.valence{9} = OrbitalType.dxxyy;
+                obj.valence(5) = 5;
+                obj.valence(6) = 6;
+                obj.valence(7) = 7;
+                obj.valence(8) = 8;
+                obj.valence(9) = 9;
             end
             for i=1:length(obj.valence)
-                obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence{i});
+                obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence(i));
             end
             obj.vdWCoefficient = 8.00*Parameters.GetInstance().GetJ2AU()...
                 *power(Parameters.GetInstance().GetNm2AU(),6.0)...

@@ -106,11 +106,11 @@ classdef Cndo2 < handle
             obj.CheckNumberValenceElectrons(mol);
             obj.CheckEnableAtomType(mol);
             obj.CheckEnableAtomTypeVdW(mol);
-            nbf = obj.molecule.GetTotalNumberAOs();
+            nbf = obj.molecule.totalNumberAOs;
             obj.fockMatrix = zeros(nbf);
             obj.energiesMO = zeros(1, nbf);
             obj.orbitalElectronPopulation = zeros(nbf);
-            obj.atomicElectronPopulation = zeros(1, length(obj.molecule.GetAtomVect()));
+            obj.atomicElectronPopulation = zeros(1, length(obj.molecule.atomVect));
             obj.overlapAOs = zeros(nbf);
             obj.cartesianMatrix = zeros(3, nbf, nbf);
             electronicTransitionDipoleMomentsDim = 1;
@@ -119,14 +119,14 @@ classdef Cndo2 < handle
 %                 }
             obj.electronicTransitionDipoleMoments = zeros(electronicTransitionDipoleMomentsDim);
             obj.coreDipoleMoment = zeros(1, 3);
-            if(obj.theory == TheoryType.CNDO2 || obj.theory == TheoryType.INDO)
-                obj.gammaAB = zeros(length(obj.molecule.GetAtomVect()));
+            if(uint8(obj.theory) == uint8(TheoryType.CNDO2) || uint8(obj.theory) == uint8(TheoryType.INDO))
+                obj.gammaAB = zeros(length(obj.molecule.atomVect));
             end
             
             % calculate electron integral
             obj.gammaAB = obj.CalcGammaAB(obj.molecule);
             obj.overlapAOs = obj.CalcOverlapAOs(obj.molecule);
-%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(obj.molecule, STOnGType.STO6G);
+            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(obj.molecule, uint8(STOnGType.STO6G));
             [obj.twoElecsTwoAtomCores, obj.twoElecsAtomEpcCores] = obj.CalcTwoElecsTwoCores(obj.molecule);
             
         end
@@ -135,16 +135,16 @@ classdef Cndo2 < handle
             requiresGuess = true;
             
             % Cndo2::MallocSCFTemporaryMatrices
-            diisNumErrorVect = Parameters.GetInstance().GetDiisNumErrorVectSCF();
+            diisNumErrorVect = Parameters.GetInstance().diisNumErrorVectSCF;
             if(0<diisNumErrorVect)
-                diisStoredDensityMatrix = zeros(diisNumErrorVect, obj.molecule.GetTotalNumberAOs()* obj.molecule.GetTotalNumberAOs());
-                diisStoredErrorVect = zeros(diisNumErrorVect, obj.molecule.GetTotalNumberAOs()* obj.molecule.GetTotalNumberAOs());
+                diisStoredDensityMatrix = zeros(diisNumErrorVect, obj.molecule.totalNumberAOs* obj.molecule.totalNumberAOs);
+                diisStoredErrorVect = zeros(diisNumErrorVect, obj.molecule.totalNumberAOs()* obj.molecule.totalNumberAOs);
                 diisErrorProducts = zeros(diisNumErrorVect+1);
                 diisErrorCoefficients = zeros(diisNumErrorVect+1, 1);
             end
             
             % SCF
-            maxIterationsSCF = Parameters.GetInstance().GetMaxIterationsSCF();
+            maxIterationsSCF = Parameters.GetInstance().maxIterationsSCF;
             for iterationStep = 0:maxIterationsSCF-1
                 obj.atomicElectronPopulation = obj.CalcAtomicElectronPopulation(...
                     obj.orbitalElectronPopulation, ...
@@ -165,14 +165,14 @@ classdef Cndo2 < handle
                 [orbital, eigenvalue] = eig(obj.fockMatrix);
                 [obj.energiesMO, order] = sort(diag(eigenvalue));
                 orbital = orbital(:, order);
-                numberTotalValenceElectrons = obj.molecule.GetTotalNumberValenceElectrons();
+                numberTotalValenceElectrons = obj.molecule.totalNumberValenceElectrons;
                 obj.orbitalElectronPopulation = 2 .* orbital(:, 1:numberTotalValenceElectrons/2) ...
                     *orbital(:, 1:numberTotalValenceElectrons/2)';
                 
                 % check convergence
                 hasConverged = obj.SatisfyConvergenceCriterion(oldOrbitalElectronPopulation, ...
                     obj.orbitalElectronPopulation,...
-                    obj.molecule.GetTotalNumberAOs());
+                    obj.molecule.totalNumberAOs);
                 
                 if(hasConverged)
                     obj.CalcSCFProperties();
@@ -225,9 +225,9 @@ classdef Cndo2 < handle
         %                                                              double const* const* overlapSingletSDs,
         %                                                              const MolDS_base::ElectronicStructure& lhsElectronicStructure)
         
-        function res = GetTheoryType(obj)
-            res = obj.theory;
-        end
+%         function res = GetTheoryType(obj)
+%             res = obj.theory;
+%         end
         
     end
     
@@ -257,7 +257,7 @@ classdef Cndo2 < handle
                 obj.orbitalElectronPopulation, ...
                 obj.molecule);
             obj.CalcCoreRepulsionEnergy();
-            if(Parameters.GetInstance().RequiresVdWSCF())
+            if(Parameters.GetInstance().requiresVdWSCF)
                 obj.CalcVdWCorrectionEnergy();
             end
             obj.elecSCFEnergy = obj.CalcElecSCFEnergy(obj.molecule, ...
@@ -267,12 +267,12 @@ classdef Cndo2 < handle
                 obj.coreRepulsionEnergy, ...
                 obj.coreEpcCoulombEnergy, ...
                 obj.vdWCorrectionEnergy);
-%             obj.coreDipoleMoment = obj.CalcCoreDipoleMoment(obj.molecule);
-%             obj.electronicTransitionDipoleMoments = obj.CalcElectronicDipoleMomentGroundState( ...
-%                 obj.cartesianMatrix, ...
-%                 obj.molecule, ...
-%                 obj.orbitalElectronPopulation, ...
-%                 obj.overlapAOs);
+            obj.coreDipoleMoment = obj.CalcCoreDipoleMoment(obj.molecule);
+            obj.electronicTransitionDipoleMoments = obj.CalcElectronicDipoleMomentGroundState( ...
+                obj.cartesianMatrix, ...
+                obj.molecule, ...
+                obj.orbitalElectronPopulation, ...
+                obj.overlapAOs);
             %    groundState = 0;
             %    if(Parameters::GetInstance()->RequiresFrequencies() &&
             %       Parameters::GetInstance()->GetElectronicStateIndexFrequencies() == groundState){
@@ -303,7 +303,7 @@ classdef Cndo2 < handle
         
         function value = GetBondingAdjustParameterK(obj, shellA, shellB)
              value=1.0;
-             if(double(shellA) >= 3 || double(shellB) >= 3)
+             if(shellA >= 3 || shellB >= 3)
                  value = obj.bondingAdjustParameterK(2); % notice c++->matlab index conversion
              end
         end
@@ -313,12 +313,16 @@ classdef Cndo2 < handle
         
         function res = GetDiatomCoreRepulsionEnergy(obj, atomA, atomB)
             distance = obj.molecule.GetDistanceAtoms(atomA, atomB);
-            res = atomA.GetCoreCharge()*atomB.GetCoreCharge()/distance;
+            res = atomA.coreCharge*atomB.coreCharge/distance;
         end
         
-        %    virtual double GetDiatomCoreRepulsion1stDerivative(const MolDS_base_atoms::Atom& atomA,
-        %                                                       const MolDS_base_atoms::Atom& atomB,
-        %                                                       MolDS_base::CartesianType axisA) const;
+        function valueVec = GetDiatomCoreRepulsion1stDerivative(obj, atomA, atomB) % valueVec 1 x 3
+            distance = obj.molecule.GetDistanceAtoms(atomA, atomB);
+            valueVec = atomA.coreCharge()*atomB.coreCharge();
+            valueVec = valueVec .* ((atomA.xyz - atomB.xyz)/distance);
+            valueVec = valueVec .* (-1.0/(distance*distance));
+        end
+        
         %    virtual double GetDiatomCoreRepulsion2ndDerivative(const MolDS_base_atoms::Atom& atomA,
         %                                                       const MolDS_base_atoms::Atom& atomB,
         %                                                       MolDS_base::CartesianType axisA1,
@@ -326,17 +330,17 @@ classdef Cndo2 < handle
         
         function res = GetDiatomVdWCorrectionEnergy(obj, atomA, atomB)
             distance = obj.molecule.GetDistanceAtoms(atomA, atomB);
-            vdWDistance = atomA.GetVdWRadii() + atomB.GetVdWRadii();
-            tmpSum = atomA.GetVdWCoefficient()+atomB.GetVdWCoefficient();
+            vdWDistance = atomA.vdWRadii + atomB.vdWRadii;
+            tmpSum = atomA.vdWCoefficient+atomB.vdWCoefficient;
             if(tmpSum<=0)
                 res = 0;
                 return;
             end
-            vdWCoefficients = 2.0*atomA.GetVdWCoefficient()*atomB.GetVdWCoefficient()/tmpSum;
+            vdWCoefficients = 2.0*atomA.vdWCoefficient*atomB.vdWCoefficient/tmpSum;
             damping = obj.GetVdWDampingValue(vdWDistance, distance);
-            scalingFactor = Parameters.GetInstance().GetVdWScalingFactorSCF();
+            scalingFactor = Parameters.GetInstance().vdWScalingFactorSCF;
             res =  -1.0*scalingFactor*vdWCoefficients*damping ...
-                /(distance*distance*distance*distance*distance*distance);
+                /(distance^6);
         end
         
         %    virtual double GetDiatomVdWCorrection1stDerivative(const MolDS_base_atoms::Atom& atomA,
@@ -357,8 +361,10 @@ classdef Cndo2 < handle
                 alpha = arg6;
                 beta = arg7;
                 value = 0.0;
-                I = 2*double(ShellType.ShellType_end)-1;
-                J = 2*double(ShellType.ShellType_end)-1;
+%                 I = 2*double(ShellType.ShellType_end)-1;
+%                 J = 2*double(ShellType.ShellType_end)-1;
+                I = 9;
+                J = 9;
                 for i = 0:I-1
                     for j = 0:J-1
                         temp = obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1);
@@ -405,20 +411,21 @@ classdef Cndo2 < handle
         % see J. Mol. Struc. (Theochem), 419, 19 (1997) (ref. [BFB_1997])
         % we set gamma=0 always.
         function rotatingMatrix = CalcRotatingMatrix(~, atomA, atomB)
-            rotatingMatrix = zeros(double(OrbitalType.OrbitalType_end));
-            eulerAngle = EulerAngle(atomB.GetXyz() - atomA.GetXyz());
-            alpha = eulerAngle.GetAlpha();
-            beta  = eulerAngle.GetBeta();
+%             rotatingMatrix = zeros(double(OrbitalType.OrbitalType_end));
+            rotatingMatrix = zeros(10);
+            eulerAngle = EulerAngle(atomB.xyz - atomA.xyz);
+            alpha = eulerAngle.alpha;
+            beta  = eulerAngle.beta;
             
-            s = double(OrbitalType.s);
-            py = double(OrbitalType.py);
-            pz = double(OrbitalType.pz);
-            px = double(OrbitalType.px);
-            dxy = double(OrbitalType.dxy);
-            dyz = double(OrbitalType.dyz);
-            dzz = double(OrbitalType.dzz);
-            dzx = double(OrbitalType.dzx);
-            dxxyy = double(OrbitalType.dxxyy);
+            s = 1;
+            py = 2;
+            pz = 3;
+            px = 4;
+            dxy = 5;
+            dyz = 6;
+            dzz = 7;
+            dzx = 8;
+            dxxyy = 9;
             % rotating matrix for s-function
             rotatingMatrix(s,s) = 1.0;
             
@@ -438,7 +445,8 @@ classdef Cndo2 < handle
             
             % rotating matrix for d-function
             % dMatrix is (37) in J. Mol. Strct. 419, 19(1997) (ref. [BFB_1997])
-            dMatrix = zeros(double(OrbitalType.OrbitalType_end));
+%             dMatrix = zeros(double(OrbitalType.OrbitalType_end));
+            dMatrix = zeros(10);
             dMatrix(dzz,dzz) = 0.5*(3.0*(cos(beta)*cos(beta)) - 1.0);
             dMatrix(dxxyy,dxxyy) = cos(0.5*beta)*cos(0.5*beta)*cos(0.5*beta)*cos(0.5*beta);
             dMatrix(dzx,dzx) = (2.0*cos(beta)-1.0)*cos(0.5*beta)*cos(0.5*beta);
@@ -481,17 +489,19 @@ classdef Cndo2 < handle
         end
         
         function gammaAB = CalcGammaAB(obj, molecule)
-            totalAtomNumber = length(molecule.GetAtomVect());
+            totalAtomNumber = length(molecule.atomVect);
             gammaAB = zeros(totalAtomNumber);
-            atomvect = molecule.GetAtomVect();
+            atomvect = molecule.atomVect;
             for A = 1:totalAtomNumber
                 atomA = atomvect{A};
-                na = double(atomA.GetValenceShellType());
-                orbitalExponentA = atomA.GetOrbitalExponent(atomA.GetValenceShellType(), OrbitalType.s, obj.theory);
+                na = double(atomA.valenceShellType);
+%                 orbitalExponentA = atomA.GetOrbitalExponent(atomA.GetValenceShellType(), OrbitalType.s, obj.theory);
+                orbitalExponentA = obj.AtomGetOrbitalExponent(atomA, atomA.valenceShellType, 1);
                 for B = A:totalAtomNumber
                     atomB = atomvect{B};
-                    nb = double(atomB.GetValenceShellType());
-                    orbitalExponentB = atomB.GetOrbitalExponent(atomB.GetValenceShellType(), OrbitalType.s, obj.theory);
+                    nb = double(atomB.valenceShellType);
+%                     orbitalExponentB = atomB.GetOrbitalExponent(atomB.GetValenceShellType(), OrbitalType.s, obj.theory);
+                    orbitalExponentB = obj.AtomGetOrbitalExponent(atomB, atomB.valenceShellType, 1);
                     
                     R = molecule.GetDistanceAtoms(A, B);
                     if(R>0.0)
@@ -518,8 +528,9 @@ classdef Cndo2 < handle
                         for l = 1:2*nb
                             temp = l;
                             temp = temp * power(2.0*orbitalExponentB, 2*nb-l);
-                            temp = temp * factorial(2*na+2*nb-l-1);
-                            temp = temp / factorial(2*nb-l);
+%                             temp = temp * factorial(2*na+2*nb-l-1);
+%                             temp = temp / factorial(2*nb-l);
+                            temp = temp * prod(2*nb-l+1:2*na+2*nb-l-1);
                             temp = temp / (2.0*nb);
                             temp = temp / power( 2.0*orbitalExponentA + 2.0*orbitalExponentB, 2.0*(na+nb)-l );
                             value = value - temp;
@@ -533,24 +544,24 @@ classdef Cndo2 < handle
             gammaAB = gammaAB + gammaAB' - diag(diag(gammaAB));
         end
         
-        function value = GetFockDiagElement(~, atomA, indexAtomA, mu, molecule, ...
+        function value = GetFockDiagElement(obj, atomA, indexAtomA, mu, molecule, ...
                 gammaAB, orbitalElectronPopulation, ...
                 atomicElectronPopulation, ~, isGuess)
-            firstAOIndexA = atomA.GetFirstAOIndex();
-            value = atomA.GetCndo2CoreIntegral(atomA.GetValence(mu-firstAOIndexA+1), ...
+            firstAOIndexA = atomA.firstAOIndex;
+            value = obj.AtomGetCoreIntegral(atomA, atomA.valence(mu-firstAOIndexA+1), ...
                 gammaAB(indexAtomA, indexAtomA), ...
                 isGuess);
             if(~isGuess)
-                atomvect = molecule.GetAtomVect();
+                atomvect = molecule.atomVect;
                 temp = atomicElectronPopulation(indexAtomA) ...
                     -0.5*orbitalElectronPopulation(mu, mu);
                 value = value + temp*gammaAB(indexAtomA, indexAtomA);
                 
                 temp = 0.0;
-                for BB = 1:length(molecule.GetAtomVect())
+                for BB = 1:length(atomvect)
                     if(BB ~= indexAtomA)
                         atomBB = atomvect{BB};
-                        temp = temp + ( atomicElectronPopulation(BB) - atomBB.GetCoreCharge()  )...
+                        temp = temp + ( atomicElectronPopulation(BB) - atomBB.coreCharge  )...
                             *gammaAB(indexAtomA, BB);
                     end
                 end
@@ -561,8 +572,8 @@ classdef Cndo2 < handle
         function value = GetFockOffDiagElement(obj, atomA, atomB, ...
                 indexAtomA, indexAtomB, mu, nu, ~, gammaAB, ... 
                 overlapAOs, orbitalElectronPopulation, ~, isGuess)
-            K = obj.GetBondingAdjustParameterK(atomA.GetValenceShellType(), atomB.GetValenceShellType());
-            bondParameter = 0.5*K*(atomA.GetCndo2BondingParameter() + atomB.GetCndo2BondingParameter());
+            K = obj.GetBondingAdjustParameterK(atomA.valenceShellType, atomB.valenceShellType);
+            bondParameter = 0.5*K*(obj.AtomGetBondingParameter(atomA) + obj.AtomGetBondingParameter(atomB));
             value =  bondParameter*overlapAOs(mu, nu);
             if(~isGuess)
                 value = value - 0.5*orbitalElectronPopulation(mu, nu)*gammaAB(indexAtomA, indexAtomB);
@@ -572,29 +583,30 @@ classdef Cndo2 < handle
         %    void TransposeFockMatrixMatrix(double** transposedFockMatrix) const;
         
         function diatomicOverlapAOs = CalcDiatomicOverlapAOsInDiatomicFrame(obj, atomA, atomB)
-            na = double(atomA.GetValenceShellType());
-            nb = double(atomB.GetValenceShellType());
+            na = double(atomA.valenceShellType);
+            nb = double(atomB.valenceShellType);
             
-            diatomicOverlapAOs = zeros(double(OrbitalType.OrbitalType_end));
+%             diatomicOverlapAOs = zeros(double(OrbitalType.OrbitalType_end));
+            diatomicOverlapAOs = zeros(10);
             rAB = obj.molecule.GetDistanceAtoms(atomA, atomB); % Inter nuclear distance between aton A and B.
             
-            for a = 1:atomA.GetValenceSize()
-                valenceOrbitalA = atomA.GetValence(a);
-                realShpericalHarmonicsA = atomA.GetRealSphericalHarmonicsIndex(a);
-                orbitalExponentA = atomA.GetOrbitalExponent(atomA.GetValenceShellType(), valenceOrbitalA, obj.theory);
+            for a = 1:length(atomA.valence)
+                valenceOrbitalA = atomA.valence(a);
+                realShpericalHarmonicsA = atomA.realSphericalHarmonicsIndices{a};
+                orbitalExponentA = obj.AtomGetOrbitalExponent(atomA, atomA.valenceShellType, valenceOrbitalA);
 
-                for b = 1:atomB.GetValenceSize()
-                    valenceOrbitalB = atomB.GetValence(b);
-                    realShpericalHarmonicsB = atomB.GetRealSphericalHarmonicsIndex(b);
-                    orbitalExponentB = atomB.GetOrbitalExponent(atomB.GetValenceShellType(), valenceOrbitalB, obj.theory);
+                for b = 1:length(atomB.valence)
+                    valenceOrbitalB = atomB.valence(b);
+                    realShpericalHarmonicsB = atomB.realSphericalHarmonicsIndices{b};
+                    orbitalExponentB = obj.AtomGetOrbitalExponent(atomB, atomB.valenceShellType, valenceOrbitalB);
 
-                    if(realShpericalHarmonicsA.GetM() == realShpericalHarmonicsB.GetM())
-                        m = abs(realShpericalHarmonicsA.GetM());
+                    if(realShpericalHarmonicsA.m == realShpericalHarmonicsB.m)
+                        m = abs(realShpericalHarmonicsA.m);
                         alpha = orbitalExponentA * rAB;
                         beta =  orbitalExponentB * rAB;
 
-                        reducedOverlapAOs = obj.GetReducedOverlapAOs(na, realShpericalHarmonicsA.GetL(), m,...
-                            nb, realShpericalHarmonicsB.GetL(), alpha, beta);
+                        reducedOverlapAOs = obj.GetReducedOverlapAOs(na, realShpericalHarmonicsA.l, m,...
+                            nb, realShpericalHarmonicsB.l, alpha, beta);
 
 
                         pre =  power(2.0*orbitalExponentA, na+0.5);
@@ -693,7 +705,7 @@ classdef Cndo2 < handle
         
         function CalcCoreRepulsionEnergy(obj)
             energy = 0.0;
-            atomvect = obj.molecule.GetAtomVect();
+            atomvect = obj.molecule.atomVect;
             for i = 1:length(atomvect)
                 for j = i+1:length(atomvect)
                     energy = energy + obj.GetDiatomCoreRepulsionEnergy(atomvect{i}, atomvect{j});
@@ -714,16 +726,16 @@ classdef Cndo2 < handle
         end
         
         function CheckEnableAtomTypeVdW(obj, molecule)
-            if(Parameters.GetInstance().RequiresVdWSCF())
+            if(Parameters.GetInstance().requiresVdWSCF)
                 if(obj.theory == TheoryType.AM1D || obj.theory == TheoryType.PM3D)
                     return;
                 end
             else
                 return;
             end
-            for i = 1:length(molecule.GetAtomVect())
-                atomvect = molecule.GetAtomVect();
-                atomType = atomvect{i}.GetAtomType();
+            for i = 1:length(molecule.atomVect)
+                atomvect = molecule.atomVect;
+                atomType = atomvect{i}.atomType;
                 enable = false;
                 for j = 1:length(obj.enableAtomTypesVdW)
                     if(atomType == obj.enableAtomTypesVdW{j})
@@ -739,7 +751,7 @@ classdef Cndo2 < handle
         
         function CalcVdWCorrectionEnergy(obj)
             value = 0.0;
-            atomvect = obj.molecule.GetAtomVect();
+            atomvect = obj.molecule.atomVect;
             for i = 1:length(atomvect)
                 atomI = atomvect{i};
                 for j = i+1:length(atomvect)
@@ -751,12 +763,26 @@ classdef Cndo2 < handle
         end
         
         function res = GetVdWDampingValue(~, vdWDistance, distance)
-            dampingFactor = Parameters.GetInstance().GetVdWDampingFactorSCF();
+            dampingFactor = Parameters.GetInstance().vdWDampingFactorSCF;
             res = 1.0/(1.0+exp(-1.0*dampingFactor*(distance/vdWDistance - 1.0)));
         end
         
-        %    double GetVdWDampingValue1stDerivative(double vdWDistance, double distance) const;
-        %    double GetVdWDampingValue2ndDerivative(double vdWDistance, double distance) const;
+        function res = GetVdWDampingValue1stDerivative(~, vdWDistance, distance)
+            dampingFactor = Parameters.GetInstance().vdWDampingFactorSCF;
+            res = (dampingFactor/vdWDistance)...
+                *exp(-1.0*dampingFactor*(distance/vdWDistance - 1.0))...
+                /(1.0+exp(-1.0*dampingFactor*(distance/vdWDistance - 1.0)))...
+                /(1.0+exp(-1.0*dampingFactor*(distance/vdWDistance - 1.0)));
+        end
+        
+        function res = GetVdWDampingValue2ndDerivative(~, vdWDistance, distance)
+            dampingFactor = Parameters.GetInstance().vdWDampingFactorSCF;
+            exponent = -1.0*dampingFactor*(distance/vdWDistance - 1.0);
+            pre = dampingFactor/vdWDistance;
+            dominator = 1.0+exp(exponent);
+            res = 2.0*pre*pre*exp(2.0*exponent)/(dominator*dominator*dominator) ...
+                -    pre*pre*exp(    exponent)/(dominator*dominator);
+        end
         
         function electronicTransitionDipoleMoments = CalcElectronicDipoleMomentGroundState(obj, ...
                 cartesianMatrix, molecule, orbitalElectronPopulation, overlapAOs)
@@ -787,22 +813,18 @@ classdef Cndo2 < handle
             change = change / numberAOs*numberAOs;
             rmsDensity = sqrt(change);
             
-            if(rmsDensity < Parameters.GetInstance().GetThresholdSCF())
+            if(rmsDensity < Parameters.GetInstance().thresholdSCF)
                 satisfy = true;
             end
         end
         
-        %    void CalcOrbitalElectronPopulation(double** orbitalElectronPopulation,
-        %                                       const MolDS_base::Molecule& molecule,
-        %                                       double const* const* fockMatrix) const;
-        
         function atomicElectronPopulation = CalcAtomicElectronPopulation(~, orbitalElectronPopulation, molecule)
-            atomvect = molecule.GetAtomVect();
+            atomvect = molecule.atomVect;
             totalNumberAtoms = length(atomvect);
             atomicElectronPopulation = zeros(1, totalNumberAtoms);
             for A = 1:totalNumberAtoms
-                firstAOIndex = atomvect{A}.GetFirstAOIndex();
-                numberAOs    = atomvect{A}.GetValenceSize();
+                firstAOIndex = atomvect{A}.firstAOIndex;
+                numberAOs    = length(atomvect{A}.valence);
                 for i = firstAOIndex:firstAOIndex+numberAOs-1
                     atomicElectronPopulation(A) = atomicElectronPopulation(A) + orbitalElectronPopulation(i, i);
                 end
@@ -811,27 +833,27 @@ classdef Cndo2 < handle
         
         function coreDipoleMoment = CalcCoreDipoleMoment(~, molecule)
              dipoleCenter = molecule.GetXyzDipoleCenter();
-             atomvect = molecule.GetAtomVect();
+             atomvect = molecule.atomVect;
              coreDipoleMoment = zeros(1, 3);
              for A = 1:length(atomvect)
-                 coreDipoleMoment = coreDipoleMoment + atomvect{A}.GetCoreCharge()...
-                     .*(atomvect{A}.GetXyz() - dipoleCenter);
+                 coreDipoleMoment = coreDipoleMoment + atomvect{A}.coreCharge...
+                     .*(atomvect{A}.xyz - dipoleCenter);
              end
         end
         
         function cartesianMatrix = CalcCartesianMatrixByGTOExpansion(obj, molecule, stonG)
-            atomvect = molecule.GetAtomVect();
+            atomvect = molecule.atomVect;
             totalAtomNumber = length(atomvect);
             for A = 1:totalAtomNumber
                 atomA  = atomvect{A};
-                firstAOIndexA  = atomA.GetFirstAOIndex();
-                numValenceAOsA = atomA.GetValenceSize();
+                firstAOIndexA  = atomA.firstAOIndex;
+                numValenceAOsA = length(atomA.valence);
                 for a = 1:numValenceAOsA
                     mu = firstAOIndexA + a - 1;
                     for B = 1:totalAtomNumber
                         atomB  = atomvect{B};
-                        firstAOIndexB  = atomB.GetFirstAOIndex();
-                        numValenceAOsB = atomB.GetValenceSize();
+                        firstAOIndexB  = atomB.firstAOIndex;
+                        numValenceAOsB = length(atomB.valence);
                         for b = 1:numValenceAOsB
                             nu = firstAOIndexB + b - 1;
                             cartesianMatrix(:, mu, nu) = obj.CalcCartesianMatrixElementsByGTOExpansion(atomA, a, atomB, b, stonG);
@@ -844,16 +866,16 @@ classdef Cndo2 < handle
         
         function xyz = CalcCartesianMatrixElementsByGTOExpansion(obj, atomA, valenceIndexA, atomB, valenceIndexB, stonG)
             xyz = zeros(1,3);
-            shellTypeA = atomA.GetValenceShellType();
-            shellTypeB = atomB.GetValenceShellType();
-            valenceOrbitalA = atomA.GetValence(valenceIndexA);
-            valenceOrbitalB = atomB.GetValence(valenceIndexB);
-            orbitalExponentA = atomA.GetOrbitalExponent(atomA.GetValenceShellType(), valenceOrbitalA, obj.theory);
-            orbitalExponentB = atomB.GetOrbitalExponent(atomB.GetValenceShellType(), valenceOrbitalB, obj.theory);
-            dxyz = atomA.GetXyz() - atomB.GetXyz();
+            shellTypeA = atomA.valenceShellType;
+            shellTypeB = atomB.valenceShellType;
+            valenceOrbitalA = atomA.valence(valenceIndexA);
+            valenceOrbitalB = atomB.valence(valenceIndexB);
+            orbitalExponentA = obj.AtomGetOrbitalExponent(atomA, atomA.valenceShellType, valenceOrbitalA);
+            orbitalExponentB = obj.AtomGetOrbitalExponent(atomB, atomB.valenceShellType, valenceOrbitalB);
+            dxyz = atomA.xyz - atomB.xyz;
             rAB = norm(dxyz);
-            for i = 1:double(stonG)
-                for j = 1:double(stonG)
+            for i = 1:stonG
+                for j = 1:stonG
                     temp = GTOExpansionSTO.GetInstance().GetCoefficient(stonG, ...
                         shellTypeA, ...
                         valenceOrbitalA, ...
@@ -873,14 +895,14 @@ classdef Cndo2 < handle
                         valenceOrbitalB, ...
                         j);
                     overlapSASB = obj.GetGaussianOverlapAOsSASB(gaussianExponentA, gaussianExponentB, rAB);
-                    tempX = obj.GetGaussianCartesianMatrix(atomA.GetAtomType(), valenceOrbitalA, gaussianExponentA, atomA.GetXyz(),...
-                        atomB.GetAtomType(), valenceOrbitalB, gaussianExponentB, atomB.GetXyz(), ...
+                    tempX = obj.GetGaussianCartesianMatrix(atomA.atomType, valenceOrbitalA, gaussianExponentA, atomA.xyz,...
+                        atomB.atomType, valenceOrbitalB, gaussianExponentB, atomB.xyz, ...
                         rAB, overlapSASB, 1);
-                    tempY = obj.GetGaussianCartesianMatrix(atomA.GetAtomType(), valenceOrbitalA, gaussianExponentA, atomA.GetXyz(),...
-                        atomB.GetAtomType(), valenceOrbitalB, gaussianExponentB, atomB.GetXyz(), ...
+                    tempY = obj.GetGaussianCartesianMatrix(atomA.atomType, valenceOrbitalA, gaussianExponentA, atomA.xyz,...
+                        atomB.atomType, valenceOrbitalB, gaussianExponentB, atomB.xyz, ...
                         rAB, overlapSASB, 2);
-                    tempZ = obj.GetGaussianCartesianMatrix(atomA.GetAtomType(), valenceOrbitalA, gaussianExponentA, atomA.GetXyz(),...
-                        atomB.GetAtomType(), valenceOrbitalB, gaussianExponentB, atomB.GetXyz(), ...
+                    tempZ = obj.GetGaussianCartesianMatrix(atomA.atomType, valenceOrbitalA, gaussianExponentA, atomA.xyz,...
+                        atomB.atomType, valenceOrbitalB, gaussianExponentB, atomB.xyz, ...
                         rAB, overlapSASB, 3);
                     xyz = xyz + temp.*[tempX, tempY, tempZ];
                 end
@@ -893,10 +915,10 @@ classdef Cndo2 < handle
                 rAB, overlapSASB, axis)
         
         function overlapAOs = CalcOverlapAOs(obj, molecule)
-            totalAONumber = molecule.GetTotalNumberAOs();
-            totalAtomNumber = length(molecule.GetAtomVect());
+            totalAONumber = molecule.totalNumberAOs;
+            totalAtomNumber = length(molecule.atomVect);
             overlapAOs = eye(totalAONumber);
-            atomvect = molecule.GetAtomVect();
+            atomvect = molecule.atomVect;
             for A = 1:totalAtomNumber
                 atomA = atomvect{A};
                 symmetrize = false;
@@ -947,14 +969,14 @@ classdef Cndo2 < handle
         function fockMatrix = CalcFockMatrix(obj, molecule, overlapAOs, ...
                 gammaAB, orbitalElectronPopulation, atomicElectronPopulation, ...
                 twoElecsTwoAtomCores, isGuess)
-            totalNumberAOs   = molecule.GetTotalNumberAOs();
-            atomvect = molecule.GetAtomVect();
+            totalNumberAOs   = molecule.totalNumberAOs;
+            atomvect = molecule.atomVect;
             totalNumberAtoms = length(atomvect);
             fockMatrix = zeros(totalNumberAOs);
             
             for A = 1:totalNumberAtoms
                 atomA = atomvect{A};
-                firstAOIndexA = atomA.GetFirstAOIndex();
+                firstAOIndexA = atomA.firstAOIndex;
                 lastAOIndexA  = atomA.GetLastAOIndex();
                 
                 % diag
@@ -973,10 +995,10 @@ classdef Cndo2 < handle
                 % offdiag
                 for B = A:totalNumberAtoms % upper part
                     atomB = atomvect{B};
-                    firstAOIndexB = atomB.GetFirstAOIndex();
+                    firstAOIndexB = atomB.firstAOIndex;
                     lastAOIndexB  = atomB.GetLastAOIndex();
-                    K = obj.GetBondingAdjustParameterK(atomA.GetValenceShellType(), atomB.GetValenceShellType());
-                    bondParameter = 0.5*K*(atomA.GetCndo2BondingParameter() + atomB.GetCndo2BondingParameter());
+                    K = obj.GetBondingAdjustParameterK(atomA.valenceShellType, atomB.valenceShellType);
+                    bondParameter = 0.5*K*(obj.AtomGetBondingParameter(atomA) + obj.AtomGetBondingParameter(atomB));
                     value =  bondParameter*overlapAOs(firstAOIndexA:lastAOIndexA, firstAOIndexB:lastAOIndexB);
                     if(~isGuess)
                         value = value - 0.5*orbitalElectronPopulation(firstAOIndexA:lastAOIndexA, firstAOIndexB:lastAOIndexB)*gammaAB(A, B);
@@ -996,13 +1018,13 @@ classdef Cndo2 < handle
             if(nargin < 5)
                 isSymmetricOverlapAOs = true;
             end
-            firstAOIndexAtomA = atomA.GetFirstAOIndex();
-            firstAOIndexAtomB = atomB.GetFirstAOIndex();
+            firstAOIndexAtomA = atomA.firstAOIndex;
+            firstAOIndexAtomB = atomB.firstAOIndex;
             
-            for i = 1:atomA.GetValenceSize()
-                orbitalA = double(atomA.GetValence(i));
-                for j = 1:atomB.GetValenceSize()
-                    orbitalB = double(atomB.GetValence(j));
+            for i = 1:length(atomA.valence)
+                orbitalA = atomA.valence(i);
+                for j = 1:length(atomB.valence)
+                    orbitalB = atomB.valence(j);
                     mu = firstAOIndexAtomA + i - 1;
                     nu = firstAOIndexAtomB + j - 1;
                     overlapAOs(mu,nu) = diatomicOverlapAOs(orbitalA,orbitalB);
@@ -1088,9 +1110,9 @@ classdef Cndo2 < handle
                 molecule,...
                 iterStep)
             % diis start
-            totalNumberAOs = molecule.GetTotalNumberAOs();
-            diisStartError = Parameters.GetInstance().GetDiisStartErrorSCF();
-            diisEndError = Parameters.GetInstance().GetDiisEndErrorSCF();
+            totalNumberAOs = molecule.totalNumberAOs;
+            diisStartError = Parameters.GetInstance().diisStartErrorSCF;
+            diisEndError = Parameters.GetInstance().diisEndErrorSCF;
             
             if( 0 < diisNumErrorVect)
                 diisStoredDensityMatrix(1:diisNumErrorVect-1, :) = diisStoredDensityMatrix(2:diisNumErrorVect, :);
@@ -1133,9 +1155,9 @@ classdef Cndo2 < handle
         end
         
         function CheckEnableAtomType(obj, molecule)
-            for i = 1:length(molecule.GetAtomVect())
-                atomvect = molecule.GetAtomVect();
-                atomType = atomvect{i}.GetAtomType();
+            for i = 1:length(molecule.atomVect)
+                atomvect = molecule.atomVect;
+                atomType = atomvect{i}.atomType;
                 enable = false;
                 for j = 1:length(obj.enableAtomTypes)
                     if(atomType == obj.enableAtomTypes{j})
@@ -1150,7 +1172,7 @@ classdef Cndo2 < handle
         end
         
         function CheckNumberValenceElectrons(~, molecule)
-            if(mod(molecule.GetTotalNumberValenceElectrons(), 2) == 1)
+            if(mod(molecule.totalNumberValenceElectrons, 2) == 1)
                 throw(MException('Cndo2:CheckNumberValenceElectrons', 'Odd number of electrons.'));
             end
         end
@@ -1162,10 +1184,10 @@ classdef Cndo2 < handle
                 ~, ~, ~, coreRepulsionEnergy,...
                 coreEpcCoulombEnergy, vdWCorrectionEnergy)
             % use density matrix for electronic energy
-            totalNumberAOs = obj.molecule.GetTotalNumberAOs();
+            totalNumberAOs = obj.molecule.totalNumberAOs;
             
             dammyOrbitalElectronPopulation = zeros(totalNumberAOs);
-            dammyAtomicElectronPopulation = zeros(1, length(molecule.GetAtomVect()));
+            dammyAtomicElectronPopulation = zeros(1, length(molecule.atomVect));
             
             isGuess = false;
             fMatrix = obj.CalcFockMatrix(molecule, ...
@@ -1192,6 +1214,57 @@ classdef Cndo2 < handle
         end
         
         
+        function res = AtomGetOrbitalExponent(~, atom, shellType, orbitalType)
+            if(shellType == 1 && orbitalType == 1) % kShell, s
+                res = atom.effectiveNuclearChargeK/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 2 && (orbitalType == 1  || ...
+                    orbitalType == 4 || ...
+                    orbitalType == 2 || ...
+                    orbitalType == 3)) % lShell, s py pz px
+                res = atom.effectiveNuclearChargeL/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 3 && (orbitalType == 1  || ...
+                    orbitalType == 4 || ...
+                    orbitalType == 2 || ...
+                    orbitalType == 3 )) % mShell, s py pz px
+                res = atom.effectiveNuclearChargeMsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 3 && (orbitalType == 5  || ...
+                    orbitalType == 6 ||...
+                    orbitalType == 7 ||...
+                    orbitalType == 8 ||...
+                    orbitalType == 9)) % mShell, dxy dyz dzz dzx dxxyy
+                res = atom.effectiveNuclearChargeMd/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 4 && (1  || ...
+                    orbitalType == 4 || ...
+                    orbitalType == 2 || ...
+                    orbitalType == 3 )) % nShell, dxy dyz dzz dzx dxxyy
+                res = atom.effectiveNuclearChargeNsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            else
+                throw(MException('Cndo2:AtomGetOrbitalExponent', 'Shell/Orbital type wrong.'));
+            end
+        end
+        
+        function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
+            if(orbital == 1) % s
+                res = -1.0*atom.imuAmuS;
+            elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
+                res = -1.0*atom.imuAmuP;
+            elseif(orbital == 5 || ...
+                    orbital == 6 || ...
+                    orbital == 7 || ...
+                    orbital == 8 || ...
+                    orbital == 9 ) % dxy dyz dzz dzx dxxyy
+                res = -1.0*atom.imuAmuD;
+            else
+                throw(MException('CNDO2:AtomGetCndo2CoreIntegral', 'Orbital type wrong.'));
+            end
+            if(~isGuess)
+                res = res - (atom.coreCharge - 0.5)*gamma;
+            end
+        end
+        
+        function res = AtomGetBondingParameter(~, atom)
+            res = atom.bondingParameter;
+        end
         
     end
     

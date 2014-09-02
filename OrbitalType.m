@@ -1,4 +1,4 @@
-classdef OrbitalType < double
+classdef OrbitalType < uint8
     enumeration
         s(1)
         py(2)

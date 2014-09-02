@@ -1,4 +1,4 @@
-classdef STOnGType < double
+classdef STOnGType < uint8
     enumeration
         STO1G(1)
         STO2G(2)

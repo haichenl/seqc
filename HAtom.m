@@ -16,10 +16,12 @@ classdef HAtom < Atom
             obj.atomicMass = 1.00794*Parameters.GetInstance().GetGMolin2AU();
             obj.coreCharge = 1.0;
             obj.numberValenceElectrons = 1;
-            obj.valenceShellType = ShellType.kShell;
-            obj.valence{1} = OrbitalType.s;
+%             obj.valenceShellType = ShellType.kShell;
+            obj.valenceShellType = 1;
+%             obj.valence{1} = OrbitalType.s;
+            obj.valence(1) = 1;
             for i=1:length(obj.valence)
-                obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence{i});
+                obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence(i));
             end
             obj.vdWCoefficient = 0.16*Parameters.GetInstance().GetJ2AU()...
                 *power(Parameters.GetInstance().GetNm2AU(),6.0)...
