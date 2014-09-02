@@ -141,25 +141,9 @@ classdef Atom < handle
             obj.index = ind;
         end
         
-%         function res = GetIndex(obj)
-%             res = obj.index;
-%         end
-        
-%         function res = GetXyz(obj)
-%             res = obj.xyz;
-%         end
-        
         function SetXyz(obj, xyz_in)
             obj.xyz = xyz_in;
         end
-        
-%         function res = GetAtomType(obj)
-%             res = obj.atomType;
-%         end
-        
-%         function res = GetAtomicMass(obj)
-%             res = obj.atomicMass;
-%         end
         
         function res = GetCoreMass(obj)
             res = obj.atomicMass - obj.numberValenceElectrons;
@@ -169,33 +153,9 @@ classdef Atom < handle
             res = length(obj.valence);
         end
         
-%         function res = GetValence(obj, ind)
-%             res = obj.valence(ind);
-%         end
-%         
-%         function res = GetRealSphericalHarmonicsIndex(obj, valenceIndex)
-%             res = obj.realSphericalHarmonicsIndices{valenceIndex};
-%         end
-        
-%         function res = GetVdWCoefficient(obj)
-%             res = obj.vdWCoefficient;
-%         end
-%         
-%         function res = GetVdWRadii(obj)
-%             res = obj.vdWRadii;
-%         end
-%         
-%         function res = GetCoreCharge(obj)
-%             res = obj.coreCharge;
-%         end
-        
         function SetCoreCharge(obj, charge)
             obj.coreCharge = charge;
         end
-        
-%         function res = GetFirstAOIndex(obj)
-%             res = obj.firstAOIndex;
-%         end
         
         function SetFirstAOIndex(obj, firstAOIndex_in)
             obj.firstAOIndex = firstAOIndex_in;
@@ -205,205 +165,29 @@ classdef Atom < handle
             res = obj.firstAOIndex + length(obj.valence) - 1;
         end
         
-%         function res = GetValenceShellType(obj)
-%             res = obj.valenceShellType;
-%         end
-%         
-%         function res = GetNumberValenceElectrons(obj)
-%             res = obj.numberValenceElectrons;
-%         end
-        
         function res = GetEffectivePrincipalQuantumNumber(~, shellType) % ShellType shellType
-            if(shellType == 1) % ShellType.kShell)
-                res = 1.0;
-            elseif(shellType == 2) % ShellType.lShell)
-                res = 2.0;
-            elseif(shellType == 3) % ShellType.mShell)
-                res = 3.0;
-            elseif(shellType == 4) % ShellType.nShell)
-                res = 3.7;
-            else
-                throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
+%             if(shellType == 1) % ShellType.kShell)
+%                 res = 1.0;
+%             elseif(shellType == 2) % ShellType.lShell)
+%                 res = 2.0;
+%             elseif(shellType == 3) % ShellType.mShell)
+%                 res = 3.0;
+%             elseif(shellType == 4) % ShellType.nShell)
+%                 res = 3.7;
+%             else
+%                 throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
+%             end
+            res = double(shellType);
+            for i = 1:length(res)
+                if(res(i) == 1 || res(i) == 2 || res(i) == 3)
+                    % do nothing
+                elseif(res(i) == 4)
+                    res(i) = 3.7;
+                else
+                    throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
+                end
             end
         end
-        
-%         function res = GetAtomicBasisValue(obj, xyz_in, valenceIndex, theory)
-%             if(length(obj.valence) < valenceIndex)
-%                 throw(MException('Atom:GetAtomicBasisValue', 'Given valenceIndex wrong.'));
-%             end
-%             dxyz = obj.xyz - xyz_in;
-%             dr = norm(dxyz);
-%             eulerangle = EulerAngle(dxyz);
-%             angularPart = obj.GetRealAngularPartAO(eulerangle.beta, eulerangle.alpha, obj.valence(valenceIndex));
-%             orbitalExponent = obj.GetOrbitalExponent(obj.valenceShellType, obj.valence(valenceIndex), theory);
-%             radialPart = obj.GetRadialPartAO(dr, orbitalExponent, obj.valenceShellType);
-%             res = angularPart * radialPart;
-%         end
-        
-%         function res = GetBondingParameter(obj, theory, orbital) % TheoryType theory, OrbitalType orbital
-%             if(nargin < 2)
-%                 theory = TheoryType.CNDO2;
-%                 orbital = OrbitalType.s;
-%             end
-%             if(theory == TheoryType.CNDO2 || theory == TheoryType.INDO)
-%                 res = obj.bondingParameter;
-%             elseif(theory == TheoryType.ZINDOS && ( orbital == s ||...
-%                     orbital == OrbitalType.px ||...
-%                     orbital == OrbitalType.py ||...
-%                     orbital == OrbitalType.pz ) )
-%                 res = obj.zindoBondingParameterS;
-%             elseif(theory == TheoryType.ZINDOS && ( orbital == OrbitalType.dxy ||...
-%                     orbital == OrbitalType.dyz ||...
-%                     orbital == OrbitalType.dzz ||...
-%                     orbital == OrbitalType.dzx ||...
-%                     orbital == OrbitalType.dxxyy ) )
-%                 res = obj.zindoBondingParameterD;
-%             elseif(theory == TheoryType.MNDO && orbital == OrbitalType.s)
-%                 res = obj.mndoBondingParameterS;
-%             elseif(theory == TheoryType.MNDO && ( orbital == OrbitalType.px ||...
-%                     orbital == OrbitalType.py ||...
-%                     orbital == OrbitalType.pz ) )
-%                 res = obj.mndoBondingParameterP;
-%             elseif(theory == TheoryType.AM1 && orbital == OrbitalType.s)
-%                 res = obj.am1BondingParameterS;
-%             elseif(theory == TheoryType.AM1 && ( orbital == OrbitalType.px ||...
-%                     orbital == OrbitalType.py ||...
-%                     orbital == OrbitalType.pz ) )
-%                 res = obj.am1BondingParameterP;
-%             elseif(theory == TheoryType.AM1D && orbital == OrbitalType.s)
-%                 res = obj.am1DBondingParameterS;
-%             elseif(theory == TheoryType.AM1D && ( orbital == OrbitalType.px ||...
-%                     orbital == OrbitalType.py ||...
-%                     orbital == OrbitalType.pz ) )
-%                 res = obj.am1DBondingParameterP;
-%             elseif(theory == TheoryType.PM3 && orbital == OrbitalType.s)
-%                 res = obj.pm3BondingParameterS;
-%             elseif(theory == TheoryType.PM3 && ( orbital == OrbitalType.px ||...
-%                     orbital == OrbitalType.py ||...
-%                     orbital == OrbitalType.pz ) )
-%                 res = obj.pm3BondingParameterP;
-%             elseif(theory == TheoryType.PM3D && orbital == OrbitalType.s)
-%                 res = obj.pm3DBondingParameterS;
-%             elseif(theory == TheoryType.PM3D && ( orbital == OrbitalType.px ||...
-%                     orbital == OrbitalType.py ||...
-%                     orbital == OrbitalType.pz ) )
-%                 res = obj.pm3DBondingParameterP;
-%             elseif(theory == TheoryType.PM3PDDG && orbital == OrbitalType.s)
-%                 res = obj.pm3PddgBondingParameterS;
-%             elseif(theory == TheoryType.PM3PDDG && ( orbital == OrbitalType.px ||...
-%                     orbital == OrbitalType.py ||...
-%                     orbital == OrbitalType.pz ) )
-%                 res = obj.pm3PddgBondingParameterP;
-%             else
-%                 throw(MException('Atom:GetBondingParameter', 'Theory/Orbital type wrong.'));
-%             end
-%         end
-        
-%         function res = GetCndo2BondingParameter(obj)
-%             res = obj.bondingParameter;
-%         end
-        
-%         function res = GetOrbitalExponent(obj, shellType, orbitalType, theory) % ShellType shellType, OrbitalType orbitalType, TheoryType theory
-%             if(theory == TheoryType.CNDO2 || theory == TheoryType.INDO || theory == TheoryType.ZINDOS)
-%                 if(shellType == ShellType.kShell && orbitalType == OrbitalType.s)
-%                     res = obj.effectiveNuclearChargeK/obj.GetEffectivePrincipalQuantumNumber(shellType);
-%                 elseif(shellType == ShellType.lShell && (orbitalType == OrbitalType.s  || ...
-%                         orbitalType == OrbitalType.px || ...
-%                         orbitalType == OrbitalType.py || ...
-%                         orbitalType == OrbitalType.pz))
-%                     res = obj.effectiveNuclearChargeL/obj.GetEffectivePrincipalQuantumNumber(shellType);
-%                 elseif(shellType == ShellType.mShell && (orbitalType == OrbitalType.s  || ...
-%                         orbitalType == OrbitalType.px || ...
-%                         orbitalType == OrbitalType.py || ...
-%                         orbitalType == OrbitalType.pz ))
-%                     res = obj.effectiveNuclearChargeMsp/obj.GetEffectivePrincipalQuantumNumber(shellType);
-%                 elseif(shellType == ShellType.mShell && (orbitalType == OrbitalType.dxy  || ...
-%                         orbitalType == OrbitalType.dyz ||...
-%                         orbitalType == OrbitalType.dzz ||...
-%                         orbitalType == OrbitalType.dzx ||...
-%                         orbitalType == OrbitalType.dxxyy))
-%                     res = obj.effectiveNuclearChargeMd/obj.GetEffectivePrincipalQuantumNumber(shellType);
-%                 elseif(shellType == ShellType.nShell && (orbitalType == OrbitalType.s  || ...
-%                         orbitalType == OrbitalType.px || ...
-%                         orbitalType == OrbitalType.py || ...
-%                         orbitalType == OrbitalType.pz ))
-%                     res = obj.effectiveNuclearChargeNsp/obj.GetEffectivePrincipalQuantumNumber(shellType);
-%                 else
-%                     throw(MException('Atom:GetOrbitalExponent', 'CNDO2/INDO/ZINDOS Shell/Orbital type wrong.'));
-%                 end
-%             elseif(theory == TheoryType.MNDO)
-%                 if(orbitalType == OrbitalType.s)
-%                     res = obj.mndoOrbitalExponentS;
-%                 elseif(orbitalType == OrbitalType.px ||...
-%                         orbitalType == OrbitalType.py ||...
-%                         orbitalType == OrbitalType.pz)
-%                     res = obj.mndoOrbitalExponentP;
-%                 else
-%                     throw(MException('Atom:GetOrbitalExponent', 'MNDO Shell/Orbital type wrong.'));
-%                 end
-%             elseif(theory == TheoryType.AM1 || theory == TheoryType.AM1D)
-%                 if(orbitalType == OrbitalType.s)
-%                     res = obj.am1OrbitalExponentS;
-%                 elseif(orbitalType == OrbitalType.px ||...
-%                         orbitalType == OrbitalType.py ||...
-%                         orbitalType == OrbitalType.pz)
-%                     res = obj.am1OrbitalExponentP;
-%                 else
-%                     throw(MException('Atom:GetOrbitalExponent', 'AM1/AM1D Orbital type wrong.'));
-%                 end
-%             elseif(theory == TheoryType.PM3 || theory == TheoryType.PM3D)
-%                 if(orbitalType == OrbitalType.s)
-%                     res = obj.pm3OrbitalExponentS;
-%                 elseif(orbitalType == OrbitalType.px ||...
-%                         orbitalType == OrbitalType.py ||...
-%                         orbitalType == OrbitalType.pz)
-%                     res = obj.pm3OrbitalExponentP;
-%                 else
-%                     throw(MException('Atom:GetOrbitalExponent', 'PM3/PM3D Orbital type wrong.'));
-%                 end
-%             elseif(theory == TheoryType.PM3PDDG)
-%                 if(orbitalType == OrbitalType.s)
-%                     res = obj.pm3PddgOrbitalExponentS;
-%                 elseif(orbitalType == OrbitalType.px ||...
-%                         orbitalType == OrbitalType.py ||...
-%                         orbitalType == OrbitalType.pz)
-%                     res = obj.pm3PddgOrbitalExponentP;
-%                 else
-%                     throw(MException('Atom:GetOrbitalExponent', 'PM3DDG Orbital type wrong.'));
-%                 end
-%             else
-%                 throw(MException('Atom:GetOrbitalExponent', 'Theory type wrong.'));
-%             end
-%         end
-        
-%         function res = GetCndo2CoreIntegral(obj, orbital, gamma, isGuess) % OrbitalType orbital
-%             orbital = double(orbital);
-%             if(orbital == 1)
-%                 res = -1.0*obj.imuAmuS;
-%             elseif(orbital == 4 || orbital == 2 || orbital == 3)
-%                 res = -1.0*obj.imuAmuP;
-%             elseif(orbital == 5 || ...
-%                     orbital == 6 || ...
-%                     orbital == 7 || ...
-%                     orbital == 8 || ...
-%                     orbital == 9 )
-%                 res = -1.0*obj.imuAmuD;
-%             else
-%                 throw(MException('Atom:GetCndo2CoreIntegral', 'CNDO2 Orbital type wrong.'));
-%             end
-%             if(~isGuess)
-%                 res = res - (obj.coreCharge - 0.5)*gamma;
-%             end
-%         end
-        
-%         % todo: complete other theories
-%         function value = GetCoreIntegral(obj, orbital, gamma, isGuess, theory)
-%             if(double(theory) == double(TheoryType.CNDO2))
-%                 value = obj.GetCndo2CoreIntegral(orbital, gamma, isGuess);
-%             else
-%                 throw(MException('Atom:GetCoreIntegral', 'Not implemented for this theory yet.'));
-%             end
-%         end
         
     end
     

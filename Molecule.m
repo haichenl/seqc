@@ -82,18 +82,22 @@ classdef Molecule < handle
             inertiaMoments = eig(inertiaTensor);
         end
         
-        function res = GetDistanceAtoms(obj, arg1, arg2)
-            if(isnumeric(arg1) && isnumeric(arg2))
-                indexAtomA = arg1;
-                indexAtomB = arg2;
-            elseif(isa(arg1, 'Atom') && isa(arg2, 'Atom'))
-                indexAtomA = arg1.index;
-                indexAtomB = arg2.index;
-            else
-                throw(MException('Molecule:GetDistanceAtoms', 'Input argument type wrong.'));
-            end
-            res = obj.distanceAtoms(indexAtomA, indexAtomB);
+        function res = GetDistanceAtoms(obj, atomA, atomB)
+            res = obj.distanceAtoms(atomA.index, atomB.index);
         end
+        
+%         function res = GetDistanceAtoms(obj, arg1, arg2)
+%             if(isnumeric(arg1) && isnumeric(arg2))
+%                 indexAtomA = arg1;
+%                 indexAtomB = arg2;
+%             elseif(isa(arg1, 'Atom') && isa(arg2, 'Atom'))
+%                 indexAtomA = arg1.index;
+%                 indexAtomB = arg2.index;
+%             else
+%                 throw(MException('Molecule:GetDistanceAtoms', 'Input argument type wrong.'));
+%             end
+%             res = obj.distanceAtoms(indexAtomA, indexAtomB);
+%         end
         
         function res = GetDistanceEpcs(obj, arg1, arg2)
             if(isnumeric(arg1) && isnumeric(arg2))

@@ -22,10 +22,11 @@ classdef (Sealed) Parameters < handle
     end
     
     properties (SetAccess = private)
+        
         currentTheory;
-        thresholdSCF;
         
         % scf
+        thresholdSCF;
         maxIterationsSCF;
         dampingThreshSCF;
         dampingWeightSCF;
