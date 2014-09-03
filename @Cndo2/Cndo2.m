@@ -290,13 +290,13 @@ classdef Cndo2 < handle
         
         function res = GetDiatomCoreRepulsionEnergy(obj, atomA, atomB)
             distance = obj.molecule.GetDistanceAtoms(atomA, atomB);
-            res = atomA.coreCharge*atomB.coreCharge/distance;
+            res = atomA.paramPool.coreCharge*atomB.paramPool.coreCharge/distance;
         end
         
         % not tested
         function valueVec = GetDiatomCoreRepulsion1stDerivative(obj, atomA, atomB) % valueVec 1 x 3
             distance = obj.molecule.GetDistanceAtoms(atomA, atomB);
-            valueVec = atomA.coreCharge()*atomB.coreCharge();
+            valueVec = atomA.paramPool.coreCharge*atomB.paramPool.coreCharge;
             valueVec = valueVec .* ((atomA.xyz - atomB.xyz)/distance);
             valueVec = valueVec .* (-1.0/(distance*distance));
         end
@@ -691,7 +691,7 @@ classdef Cndo2 < handle
                 for BB = 1:length(atomvect)
                     if(BB ~= indexAtomA)
                         atomBB = atomvect{BB};
-                        temp = temp + ( obj.atomicElectronPopulation(BB) - atomBB.coreCharge  )...
+                        temp = temp + ( obj.atomicElectronPopulation(BB) - atomBB.paramPool.coreCharge  )...
                             *obj.gammaAB(indexAtomA, BB);
                     end
                 end
@@ -1387,7 +1387,7 @@ classdef Cndo2 < handle
              atomvect = obj.molecule.atomVect;
              coreDipoleMoment = zeros(1, 3);
              for A = 1:length(atomvect)
-                 coreDipoleMoment = coreDipoleMoment + atomvect{A}.coreCharge...
+                 coreDipoleMoment = coreDipoleMoment + atomvect{A}.paramPool.coreCharge...
                      .*(atomvect{A}.xyz - dipoleCenter);
              end
         end
@@ -1749,28 +1749,28 @@ classdef Cndo2 < handle
         
         function res = AtomGetOrbitalExponent(~, atom, shellType, orbitalType)
             if(shellType == 1 && orbitalType == 1) % kShell, s
-                res = atom.effectiveNuclearChargeK/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeK/atom.GetEffectivePrincipalQuantumNumber(shellType);
             elseif(shellType == 2 && (orbitalType == 1  || ...
                     orbitalType == 4 || ...
                     orbitalType == 2 || ...
                     orbitalType == 3)) % lShell, s py pz px
-                res = atom.effectiveNuclearChargeL/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeL/atom.GetEffectivePrincipalQuantumNumber(shellType);
             elseif(shellType == 3 && (orbitalType == 1  || ...
                     orbitalType == 4 || ...
                     orbitalType == 2 || ...
                     orbitalType == 3 )) % mShell, s py pz px
-                res = atom.effectiveNuclearChargeMsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeMsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
             elseif(shellType == 3 && (orbitalType == 5  || ...
                     orbitalType == 6 ||...
                     orbitalType == 7 ||...
                     orbitalType == 8 ||...
                     orbitalType == 9)) % mShell, dxy dyz dzz dzx dxxyy
-                res = atom.effectiveNuclearChargeMd/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeMd/atom.GetEffectivePrincipalQuantumNumber(shellType);
             elseif(shellType == 4 && (1  || ...
                     orbitalType == 4 || ...
                     orbitalType == 2 || ...
                     orbitalType == 3 )) % nShell, dxy dyz dzz dzx dxxyy
-                res = atom.effectiveNuclearChargeNsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeNsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
             else
                 throw(MException('Cndo2:AtomGetOrbitalExponent', 'Shell/Orbital type wrong.'));
             end
@@ -1791,35 +1791,35 @@ classdef Cndo2 < handle
 %                 throw(MException('CNDO2:AtomGetCndo2CoreIntegral', 'Orbital type wrong.'));
 %             end
 %             if(~isGuess)
-%                 res = res - (atom.coreCharge - 0.5)*gamma;
+%                 res = res - (atom.paramPool.coreCharge - 0.5)*gamma;
 %             end
 %         end
         
-        % vectorized version
+        % vectorized version of the above function
         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
             res = zeros(1,length(orbital));
             for i = 1:length(orbital)
                 if(orbital(i) == 1) % s
-                    res(i) = -1.0*atom.imuAmuS;
+                    res(i) = -1.0*atom.paramPool.imuAmuS;
                 elseif(orbital(i) == 4 || orbital(i) == 2 || orbital(i) == 3) % py pz px
-                    res(i) = -1.0*atom.imuAmuP;
+                    res(i) = -1.0*atom.paramPool.imuAmuP;
                 elseif(orbital(i) == 5 || ...
                         orbital(i) == 6 || ...
                         orbital(i) == 7 || ...
                         orbital(i) == 8 || ...
                         orbital(i) == 9 ) % dxy dyz dzz dzx dxxyy
-                    res(i) = -1.0*atom.imuAmuD;
+                    res(i) = -1.0*atom.paramPool.imuAmuD;
                 else
                     throw(MException('CNDO2:AtomGetCndo2CoreIntegral', 'Orbital type wrong.'));
                 end
             end
             if(~isGuess)
-                res = res - (atom.coreCharge - 0.5)*gamma;
+                res = res - (atom.paramPool.coreCharge - 0.5)*gamma;
             end
         end
         
         function res = AtomGetBondingParameter(~, atom)
-            res = atom.bondingParameter;
+            res = atom.paramPool.bondingParameter;
         end
         
     end
