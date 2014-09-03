@@ -13,6 +13,8 @@ classdef (Abstract) Atom < handle
         vdWCoefficient;
         vdWRadii;
         
+        coreCharge;
+        
         % singleton holding parameters
         paramPool;
         
@@ -40,9 +42,9 @@ classdef (Abstract) Atom < handle
             res = length(obj.valence);
         end
         
-%         function SetCoreCharge(obj, charge)
-%             obj.coreCharge = charge;
-%         end
+        function SetCoreCharge(obj, charge)
+            obj.coreCharge = charge;
+        end
         
         function SetFirstAOIndex(obj, firstAOIndex_in)
             obj.firstAOIndex = firstAOIndex_in;

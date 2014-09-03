@@ -20,11 +20,4 @@ classdef AtomFactory < handle
         
     end
     
-    methods (Access = private)
-        
-        function obj = AtomFactory()
-        end
-        
-    end
-    
 end

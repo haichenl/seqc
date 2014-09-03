@@ -14,7 +14,7 @@ classdef AtomC < Atom
         function SetAtomicParameters(obj)
             obj.atomType = EnumAtom.C;
             obj.atomicMass = 12.0107*Arguments.GetInstance().GetGMolin2AU();
-%             obj.coreCharge = 4.0;
+            obj.coreCharge = 4.0;
             obj.numberValenceElectrons = 4;
 %             obj.valenceShellType = EnumShell.lShell;
             obj.valenceShellType = 2;

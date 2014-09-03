@@ -290,13 +290,13 @@ classdef Cndo2 < handle
         
         function res = GetDiatomCoreRepulsionEnergy(obj, atomA, atomB)
             distance = obj.molecule.GetDistanceAtoms(atomA, atomB);
-            res = atomA.paramPool.coreCharge*atomB.paramPool.coreCharge/distance;
+            res = atomA.coreCharge*atomB.coreCharge/distance;
         end
         
         % not tested
         function valueVec = GetDiatomCoreRepulsion1stDerivative(obj, atomA, atomB) % valueVec 1 x 3
             distance = obj.molecule.GetDistanceAtoms(atomA, atomB);
-            valueVec = atomA.paramPool.coreCharge*atomB.paramPool.coreCharge;
+            valueVec = atomA.coreCharge*atomB.coreCharge;
             valueVec = valueVec .* ((atomA.xyz - atomB.xyz)/distance);
             valueVec = valueVec .* (-1.0/(distance*distance));
         end
@@ -691,7 +691,7 @@ classdef Cndo2 < handle
                 for BB = 1:length(atomvect)
                     if(BB ~= indexAtomA)
                         atomBB = atomvect{BB};
-                        temp = temp + ( obj.atomicElectronPopulation(BB) - atomBB.paramPool.coreCharge  )...
+                        temp = temp + ( obj.atomicElectronPopulation(BB) - atomBB.coreCharge  )...
                             *obj.gammaAB(indexAtomA, BB);
                     end
                 end
@@ -1387,7 +1387,7 @@ classdef Cndo2 < handle
              atomvect = obj.molecule.atomVect;
              coreDipoleMoment = zeros(1, 3);
              for A = 1:length(atomvect)
-                 coreDipoleMoment = coreDipoleMoment + atomvect{A}.paramPool.coreCharge...
+                 coreDipoleMoment = coreDipoleMoment + atomvect{A}.coreCharge...
                      .*(atomvect{A}.xyz - dipoleCenter);
              end
         end
@@ -1791,7 +1791,7 @@ classdef Cndo2 < handle
 %                 throw(MException('CNDO2:AtomGetCndo2CoreIntegral', 'Orbital type wrong.'));
 %             end
 %             if(~isGuess)
-%                 res = res - (atom.paramPool.coreCharge - 0.5)*gamma;
+%                 res = res - (atom.coreCharge - 0.5)*gamma;
 %             end
 %         end
         
@@ -1814,7 +1814,7 @@ classdef Cndo2 < handle
                 end
             end
             if(~isGuess)
-                res = res - (atom.paramPool.coreCharge - 0.5)*gamma;
+                res = res - (atom.coreCharge - 0.5)*gamma;
             end
         end
         

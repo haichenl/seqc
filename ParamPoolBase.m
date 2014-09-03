@@ -68,7 +68,7 @@ classdef (Abstract) ParamPoolBase < handle
     
     properties (SetAccess = protected)
         
-        % for now treat this as a constant
+        % zindo uses this
         coreCharge;
         
         % cndo/2
