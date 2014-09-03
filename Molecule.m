@@ -20,14 +20,6 @@ classdef Molecule < handle
         function obj = Molecule()
         end
         
-%         function res = GetAtomVect(obj)
-%             res = obj.atomVect;
-%         end
-%         
-%         function res = GetEpcVect(obj)
-%             res = obj.epcVect;
-%         end
-        
         function AddAtom(obj, atom)
             obj.atomVect{end+1} = atom;
         end
@@ -35,14 +27,6 @@ classdef Molecule < handle
         function AddEpc(obj, epc)
             obj.epcVect{end+1} = epc;
         end
-        
-%         function res = GetXyzCOM(obj)
-%             res = obj.xyzCOM;
-%         end
-%         
-%         function res = GetXyzCOC(obj)
-%             res = obj.xyzCOC;
-%         end
         
         function res = GetXyzDipoleCenter(obj)
             res = obj.xyzCOC;
@@ -62,18 +46,6 @@ classdef Molecule < handle
             obj.CalcDistanceEpcs();
             obj.CalcDistanceAtomsEpcs();
         end
-        
-%         function res = GetTotalNumberAOs(obj)
-%             res = obj.totalNumberAOs;
-%         end
-        
-%         function res = GetTotalNumberValenceElectrons(obj)
-%             res = obj.totalNumberValenceElectrons;
-%         end
-        
-%         function res = GetTotalCoreMass(obj)
-%             res = obj.totalCoreMass;
-%         end
         
         function [inertiaMoments, inertiaTensor] = CalcPrincipalAxes(obj)
             obj.CalcXyzCOM();
