@@ -125,7 +125,7 @@ classdef Molecule < handle
         
         function CalcXyzCOM(obj)
             totalAtomicMass = 0.0;
-            obj.xyzCOM = zeros(1, 3);
+            obj.xyzCOM = zeros(3, 1);
             for i = 1:length(obj.atomVect)
                 atomicXyz = obj.atomVect{i}.xyz;
                 atomicMass = obj.atomVect{i}.atomicMass;
@@ -137,7 +137,7 @@ classdef Molecule < handle
         
         function CalcXyzCOC(obj)
             totalCoreMass_ = 0.0;
-            obj.xyzCOC = zeros(1, 3);
+            obj.xyzCOC = zeros(3, 1);
             for i = 1:length(obj.atomVect)
                 atomicXyz = obj.atomVect{i}.xyz;
                 coreMass = obj.atomVect{i}.GetCoreMass();

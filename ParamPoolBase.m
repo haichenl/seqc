@@ -35,7 +35,7 @@ classdef (Abstract) ParamPoolBase < handle
         end
         
         function cndo2params = GetCndo2Params(obj)
-            cndo2params = zeros(1,length(obj.cndo2ValidParams));
+            cndo2params = zeros(length(obj.cndo2ValidParams), 1);
             iter = 1;
             for i = obj.cndo2ValidParams
                 switch i
@@ -119,8 +119,8 @@ classdef (Abstract) ParamPoolBase < handle
         mndoBondingParameterS;
         mndoBondingParameterP;
         mndoAlpha;
-        mndoDerivedParameterD = zeros(1, 3);
-        mndoDerivedParameterRho = zeros(1, 3);
+        mndoDerivedParameterD = zeros(3, 1);
+        mndoDerivedParameterRho = zeros(3, 1);
         mndoElecEnergyAtom;
         mndoHeatsFormAtom;
         mndoGss;
@@ -141,11 +141,11 @@ classdef (Abstract) ParamPoolBase < handle
         am1Gsp;
         am1Gpp2;
         am1Hsp;
-        am1DerivedParameterD = zeros(1, 3);
-        am1DerivedParameterRho = zeros(1, 3);
-        am1ParameterK = zeros(1, 4);
-        am1ParameterL = zeros(1, 4);
-        am1ParameterM = zeros(1, 4);
+        am1DerivedParameterD = zeros(3, 1);
+        am1DerivedParameterRho = zeros(3, 1);
+        am1ParameterK = zeros(4, 1);
+        am1ParameterL = zeros(4, 1);
+        am1ParameterM = zeros(4, 1);
         am1DCoreintegralS;
         am1DCoreintegralP;
         am1DBondingParameterS;
@@ -159,11 +159,11 @@ classdef (Abstract) ParamPoolBase < handle
         pm3BondingParameterS;
         pm3BondingParameterP;
         pm3Alpha;
-        pm3DerivedParameterD = zeros(1, 3);
-        pm3DerivedParameterRho = zeros(1, 3);
-        pm3ParameterK = zeros(1, 4);
-        pm3ParameterL = zeros(1, 4);
-        pm3ParameterM = zeros(1, 4);
+        pm3DerivedParameterD = zeros(3, 1);
+        pm3DerivedParameterRho = zeros(3, 1);
+        pm3ParameterK = zeros(4, 1);
+        pm3ParameterL = zeros(4, 1);
+        pm3ParameterM = zeros(4, 1);
         pm3Gss;
         pm3Gpp;
         pm3Gsp;
@@ -176,13 +176,13 @@ classdef (Abstract) ParamPoolBase < handle
         pm3PddgBondingParameterS;
         pm3PddgBondingParameterP;
         pm3PddgAlpha;
-        pm3PddgDerivedParameterD = zeros(1, 3);
-        pm3PddgDerivedParameterRho = zeros(1, 3);
-        pm3PddgParameterK = zeros(1, 4);
-        pm3PddgParameterL = zeros(1, 4);
-        pm3PddgParameterM = zeros(1, 4);
-        pm3PddgParameterPa = zeros(1, 2);
-        pm3PddgParameterDa = zeros(1, 2);
+        pm3PddgDerivedParameterD = zeros(3, 1);
+        pm3PddgDerivedParameterRho = zeros(3, 1);
+        pm3PddgParameterK = zeros(4, 1);
+        pm3PddgParameterL = zeros(4, 1);
+        pm3PddgParameterM = zeros(4, 1);
+        pm3PddgParameterPa = zeros(2, 1);
+        pm3PddgParameterDa = zeros(2, 1);
         pm3DCoreintegralS;
         pm3DCoreintegralP;
         pm3DBondingParameterS;

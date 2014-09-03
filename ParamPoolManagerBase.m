@@ -29,7 +29,7 @@ classdef (Abstract) ParamPoolManagerBase < handle
         end
         
         function res = GetAllParams(obj)
-            res = zeros(1, obj.paramEndIndices(end));
+            res = zeros(obj.paramEndIndices(end), 1);
             for i = 1:length(obj.paramPoolsVec)
                 res(obj.paramStartIndices(i):obj.paramEndIndices(i)) = obj.GetIthPoolParams(i);
             end

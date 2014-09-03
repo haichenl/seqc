@@ -31,6 +31,13 @@ classdef (Abstract) Atom < handle
         end
         
         function SetXyz(obj, xyz_in)
+            if(prod(size(xyz_in)==[3,1]))
+                % do nothing
+            elseif(prod(size(xyz_in)==[1,3]))
+                xyz_in = xyz_in';
+            else
+                throw(MException('Atom:SetXyz', 'Input xyz vector dimension wrong.'));
+            end
             obj.xyz = xyz_in;
         end
         

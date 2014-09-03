@@ -44,7 +44,7 @@ classdef Cndo2 < handle
     properties (SetAccess = private)
         
         elecSCFEnergy;
-        bondingAdjustParameterK = zeros(1,2); %see (3.79) in J. A. Pople book
+        bondingAdjustParameterK = zeros(2,1); %see (3.79) in J. A. Pople book
         gammaAB;
         enableAtomTypesVdW = {};
         
@@ -110,9 +110,9 @@ classdef Cndo2 < handle
             obj.CheckEnableAtomTypeVdW();
             nbf = obj.molecule.totalNumberAOs;
             obj.fockMatrix = zeros(nbf);
-            obj.energiesMO = zeros(1, nbf);
+            obj.energiesMO = zeros(nbf, 1);
             obj.orbitalElectronPopulation = zeros(nbf);
-            obj.atomicElectronPopulation = zeros(1, length(obj.molecule.atomVect));
+            obj.atomicElectronPopulation = zeros(length(obj.molecule.atomVect), 1);
             obj.overlapAOs = zeros(nbf);
             obj.cartesianMatrix = zeros(nbf, nbf, 3);
             electronicTransitionDipoleMomentsDim = 1;
@@ -120,7 +120,7 @@ classdef Cndo2 < handle
 %                 electronicTransitionDipoleMomentsDim += Parameters::GetInstance()->GetNumberExcitedStatesCIS();
 %                 }
             obj.electronicTransitionDipoleMoments = zeros(electronicTransitionDipoleMomentsDim);
-            obj.coreDipoleMoment = zeros(1, 3);
+            obj.coreDipoleMoment = zeros(3, 1);
             
             % calculate electron integral
             if(uint8(obj.theory) == uint8(EnumTheory.CNDO2) || uint8(obj.theory) == uint8(EnumTheory.INDO))
@@ -138,8 +138,8 @@ classdef Cndo2 < handle
             % Cndo2::MallocSCFTemporaryMatrices
             diisNumErrorVect = Arguments.GetInstance().diisNumErrorVectSCF;
             if(0<diisNumErrorVect)
-                diisStoredDensityMatrix = zeros(diisNumErrorVect, obj.molecule.totalNumberAOs* obj.molecule.totalNumberAOs);
-                diisStoredErrorVect = zeros(diisNumErrorVect, obj.molecule.totalNumberAOs()* obj.molecule.totalNumberAOs);
+                diisStoredDensityMatrix = zeros(obj.molecule.totalNumberAOs* obj.molecule.totalNumberAOs, diisNumErrorVect);
+                diisStoredErrorVect = zeros(obj.molecule.totalNumberAOs()* obj.molecule.totalNumberAOs, diisNumErrorVect);
                 diisErrorProducts = zeros(diisNumErrorVect+1);
                 diisErrorCoefficients = zeros(diisNumErrorVect+1, 1);
             end
@@ -265,7 +265,7 @@ classdef Cndo2 < handle
             groundState = 1;
             if(from == groundState && to == groundState)
                 dipoleCenter = obj.molecule.GetXyzDipoleCenter();
-                transitionDipoleMoment = zeros(1, 3);
+                transitionDipoleMoment = zeros(3, 1);
                 transitionDipoleMoment(1) = transitionDipoleMoment(1) - sum(sum(obj.orbitalElectronPopulation.*obj.cartesianMatrix(:,:,1)));
                 transitionDipoleMoment(2) = transitionDipoleMoment(2) - sum(sum(obj.orbitalElectronPopulation.*obj.cartesianMatrix(:,:,2)));
                 transitionDipoleMoment(3) = transitionDipoleMoment(3) - sum(sum(obj.orbitalElectronPopulation.*obj.cartesianMatrix(:,:,3)));
@@ -334,7 +334,7 @@ classdef Cndo2 < handle
 %             dampingFactor = Arguments.GetInstance().vdWDampingFactorSCF;
             damping = obj.GetVdWDampingValue(vdWDistance, distance);
             damping1stDerivative = obj.GetVdWDampingValue1stDerivative(vdWDistance, distance);
-            valueVec = zeros(1,3);
+            valueVec = zeros(3, 1);
             tmp = distance ^ 6; %distance*distance*distance*distance*distance*distance;
             valueVec = valueVec + 6.0*damping/(tmp*distance) ...
                 -damping1stDerivative/tmp;
@@ -684,7 +684,7 @@ classdef Cndo2 < handle
             if(~isGuess)
                 atomvect = obj.molecule.atomVect;
                 temp = obj.atomicElectronPopulation(indexAtomA) ...
-                    -0.5*diag(obj.orbitalElectronPopulation(mu, mu))';
+                    -0.5*diag(obj.orbitalElectronPopulation(mu, mu));
                 value = value + temp*obj.gammaAB(indexAtomA, indexAtomA);
                 
                 temp = 0.0;
@@ -1373,7 +1373,7 @@ classdef Cndo2 < handle
         function atomicElectronPopulation = CalcAtomicElectronPopulation(obj)
             atomvect = obj.molecule.atomVect;
             totalNumberAtoms = length(atomvect);
-            atomicElectronPopulation = zeros(1, totalNumberAtoms);
+            atomicElectronPopulation = zeros(totalNumberAtoms, 1);
             for A = 1:totalNumberAtoms
                 firstAOIndex = atomvect{A}.firstAOIndex;
                 numberAOs    = length(atomvect{A}.valence);
@@ -1385,7 +1385,7 @@ classdef Cndo2 < handle
         function coreDipoleMoment = CalcCoreDipoleMoment(obj)
              dipoleCenter = obj.molecule.GetXyzDipoleCenter();
              atomvect = obj.molecule.atomVect;
-             coreDipoleMoment = zeros(1, 3);
+             coreDipoleMoment = zeros(3, 1);
              for A = 1:length(atomvect)
                  coreDipoleMoment = coreDipoleMoment + atomvect{A}.coreCharge...
                      .*(atomvect{A}.xyz - dipoleCenter);
@@ -1417,7 +1417,7 @@ classdef Cndo2 < handle
         end
         
         function xyz = CalcCartesianMatrixElementsByGTOExpansion(obj, atomA, valenceIndexA, atomB, valenceIndexB, stonG)
-            xyz = zeros(1,3);
+            xyz = zeros(3, 1);
             shellTypeA = atomA.valenceShellType;
             shellTypeB = atomB.valenceShellType;
             valenceOrbitalA = atomA.valence(valenceIndexA);
@@ -1456,7 +1456,7 @@ classdef Cndo2 < handle
                     tempZ = obj.GetGaussianCartesianMatrix(atomA.atomType, valenceOrbitalA, gaussianExponentA, atomA.xyz,...
                         atomB.atomType, valenceOrbitalB, gaussianExponentB, atomB.xyz, ...
                         rAB, overlapSASB, 3);
-                    xyz = xyz + temp.*[tempX, tempY, tempZ];
+                    xyz = xyz + temp.*[tempX; tempY; tempZ];
                 end
             end
         end
@@ -1671,27 +1671,30 @@ classdef Cndo2 < handle
             diisEndError = Arguments.GetInstance().diisEndErrorSCF;
             
             if( 0 < diisNumErrorVect)
-                diisStoredDensityMatrix(1:diisNumErrorVect-1, :) = diisStoredDensityMatrix(2:diisNumErrorVect, :);
-                diisStoredDensityMatrix(diisNumErrorVect, :) = 0*diisStoredDensityMatrix(diisNumErrorVect, :);
-                diisStoredErrorVect(1:diisNumErrorVect-1, :) = diisStoredErrorVect(2:diisNumErrorVect, :);
-                diisStoredErrorVect(diisNumErrorVect, :) = 0*diisStoredErrorVect(diisNumErrorVect, :);
+                diisStoredDensityMatrix(:, 1:diisNumErrorVect-1) = diisStoredDensityMatrix(:, 2:diisNumErrorVect);
+                diisStoredDensityMatrix(:, diisNumErrorVect) = 0*diisStoredDensityMatrix(:, diisNumErrorVect);
+                diisStoredErrorVect(:, 1:diisNumErrorVect-1) = diisStoredErrorVect(:, 2:diisNumErrorVect);
+                diisStoredErrorVect(:, diisNumErrorVect) = 0*diisStoredErrorVect(:, diisNumErrorVect);
             end
             
-            diisStoredDensityMatrix(diisNumErrorVect, :) = reshape(orbitalElectronPopulation, 1, totalNumberAOs*totalNumberAOs);
-            diisStoredErrorVect(diisNumErrorVect, :) = reshape(orbitalElectronPopulation - oldOrbitalElectronPopulation, 1, totalNumberAOs*totalNumberAOs);
+            diisStoredDensityMatrix(:, diisNumErrorVect) = reshape(orbitalElectronPopulation, totalNumberAOs*totalNumberAOs, 1);
+            diisStoredErrorVect(:, diisNumErrorVect) = reshape(orbitalElectronPopulation - oldOrbitalElectronPopulation, totalNumberAOs*totalNumberAOs, 1);
             
-            for mi = 1:diisNumErrorVect-1
-                for mj = 1:diisNumErrorVect-1
-                    diisErrorProducts(mi,mj) = diisErrorProducts(mi+1,mj+1);
-                end
-            end
+%             for mi = 1:diisNumErrorVect-1
+%                 for mj = 1:diisNumErrorVect-1
+%                     diisErrorProducts(mi,mj) = diisErrorProducts(mi+1,mj+1);
+%                 end
+%             end
             
-            diisErrorProducts(diisNumErrorVect, 1:end-1) = diisStoredErrorVect * diisStoredErrorVect(diisNumErrorVect,:)';
+            mi = (1:diisNumErrorVect-1)';
+            diisErrorProducts(mi,mi) = diisErrorProducts(mi+1,mi+1);
+            
+            diisErrorProducts(1:end-1, diisNumErrorVect) = diisStoredErrorVect' * diisStoredErrorVect(:, diisNumErrorVect);
             
             for mi = 1:diisNumErrorVect
-                diisErrorProducts(mi,diisNumErrorVect) = diisErrorProducts(diisNumErrorVect,mi);
-                diisErrorProducts(mi,diisNumErrorVect+1) = -1.0;
-                diisErrorProducts(diisNumErrorVect+1,mi) = -1.0;
+                diisErrorProducts(diisNumErrorVect, mi) = diisErrorProducts(mi, diisNumErrorVect);
+                diisErrorProducts(diisNumErrorVect+1, mi) = -1.0;
+                diisErrorProducts(mi, diisNumErrorVect+1) = -1.0;
                 diisErrorCoefficients(mi) = 0.0;
             end
             
@@ -1705,7 +1708,7 @@ classdef Cndo2 < handle
 %                     continue;
 %                 end
                 diisErrorCoefficients = tmpDiisErrorProducts \ diisErrorCoefficients;
-                orbitalElectronPopulation = reshape(diisStoredDensityMatrix' * diisErrorCoefficients(1:end-1), totalNumberAOs, totalNumberAOs);
+                orbitalElectronPopulation = reshape(diisStoredDensityMatrix * diisErrorCoefficients(1:end-1), totalNumberAOs, totalNumberAOs);
             end
             % diis end
         end
@@ -1797,7 +1800,7 @@ classdef Cndo2 < handle
         
         % vectorized version of the above function
         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
-            res = zeros(1,length(orbital));
+            res = zeros(length(orbital), 1);
             for i = 1:length(orbital)
                 if(orbital(i) == 1) % s
                     res(i) = -1.0*atom.paramPool.imuAmuS;
