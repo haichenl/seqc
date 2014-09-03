@@ -3,10 +3,15 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
     methods (Access = private)
         
         function obj = ParamPoolH()
+            obj.SetDefaultParameters();
+        end
+        
+        function SetDefaultParameters(obj)
             
             obj.coreCharge = 1.0;
             
             % cndo/2
+            obj.cndo2ValidParams = [1,2,5];
             obj.bondingParameter = -9.0*Arguments.GetInstance().GetEV2AU();
             obj.imuAmuS = 7.176*Arguments.GetInstance().GetEV2AU();
             obj.imuAmuP = 0.0;
@@ -163,6 +168,7 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.pm3DBondingParameterP = 0.0 * Arguments.GetInstance().GetEV2AU();
             obj.pm3DAlpha = 3.417532 / Arguments.GetInstance().GetAngstrom2AU();
         end
+        
     end
     
     methods (Static)

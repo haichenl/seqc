@@ -1,15 +1,82 @@
 classdef (Abstract) ParamPoolBase < handle
     
+    methods (Access = public)
+        
+        function SetCndo2Params(obj, cndo2params)
+            if(length(cndo2params) ~= length(obj.cndo2ValidParams))
+                throw(MException('ParamPoolBase:SetCndo2Params', 'Wrong number of input parameters.'));
+            end
+            iter = 1;
+            for i = obj.cndo2ValidParams
+                switch i
+                    case 1
+                        obj.bondingParameter = cndo2params(iter);
+                    case 2
+                        obj.imuAmuS = cndo2params(iter);
+                    case 3
+                        obj.imuAmuP = cndo2params(iter);
+                    case 4
+                        obj.imuAmuD = cndo2params(iter);
+                    case 5
+                        obj.effectiveNuclearChargeK = cndo2params(iter);
+                    case 6
+                        obj.effectiveNuclearChargeL = cndo2params(iter);
+                    case 7
+                        obj.effectiveNuclearChargeMsp = cndo2params(iter);
+                    case 8
+                        obj.effectiveNuclearChargeMd = cndo2params(iter);
+                    case 9
+                        obj.effectiveNuclearChargeNsp = cndo2params(iter);
+                    otherwise
+                        throw(MException('ParamPoolBase:SetCndo2Params', 'validParams wrong.'));
+                end
+                iter = iter + 1;
+            end
+        end
+        
+        function cndo2params = GetCndo2Params(obj)
+            cndo2params = zeros(1,length(obj.cndo2ValidParams));
+            iter = 1;
+            for i = obj.cndo2ValidParams
+                switch i
+                    case 1
+                        cndo2params(iter) = obj.bondingParameter;
+                    case 2
+                        cndo2params(iter) = obj.imuAmuS;
+                    case 3
+                        cndo2params(iter) = obj.imuAmuP;
+                    case 4
+                        cndo2params(iter) = obj.imuAmuD;
+                    case 5
+                        cndo2params(iter) = obj.effectiveNuclearChargeK;
+                    case 6
+                        cndo2params(iter) = obj.effectiveNuclearChargeL;
+                    case 7
+                        cndo2params(iter) = obj.effectiveNuclearChargeMsp;
+                    case 8
+                        cndo2params(iter) = obj.effectiveNuclearChargeMd;
+                    case 9
+                        cndo2params(iter) = obj.effectiveNuclearChargeNsp;
+                    otherwise
+                        throw(MException('ParamPoolBase:GetCndo2Params', 'validParams wrong.'));
+                end
+                iter = iter + 1;
+            end
+        end
+        
+    end
+    
     properties (SetAccess = protected)
         
         % for now treat this as a constant
         coreCharge;
         
         % cndo/2
+        cndo2ValidParams;
+        bondingParameter;
         imuAmuS;
         imuAmuP;
         imuAmuD;
-        bondingParameter;
         effectiveNuclearChargeK;
         effectiveNuclearChargeL;
         effectiveNuclearChargeMsp;

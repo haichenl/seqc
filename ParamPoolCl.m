@@ -3,10 +3,15 @@ classdef (Sealed) ParamPoolCl < ParamPoolBase
     methods (Access = private)
         
         function obj = ParamPoolCl()
+            obj.SetDefaultParameters();
+        end
+        
+        function SetDefaultParameters(obj)
             
             obj.coreCharge = 7.0;
             
             % cndo/2
+            obj.cndo2ValidParams = [1,2,3,4,5,6,7,8];
             obj.bondingParameter = -22.330*Arguments.GetInstance().GetEV2AU();
             obj.imuAmuS = 21.591*Arguments.GetInstance().GetEV2AU();
             obj.imuAmuP = 8.708*Arguments.GetInstance().GetEV2AU();
