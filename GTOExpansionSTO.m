@@ -10,12 +10,12 @@ classdef (Sealed) GTOExpansionSTO < handle
     methods (Access = public)
         
         function res = GetExponent(obj, stonG, shellType, orbitalType, index)
-%             if(orbitalType == OrbitalType.s)
-%                 azimuthalType = AzimuthalType.sAzimuthal;
-%             elseif(orbitalType == OrbitalType.px || orbitalType == OrbitalType.py ||orbitalType == OrbitalType.pz )
-%                 azimuthalType = AzimuthalType.pAzimuthal;
-%             elseif(orbitalType == OrbitalType.dxy || orbitalType == OrbitalType.dyz ||orbitalType == OrbitalType.dzz || orbitalType == OrbitalType.dzx ||orbitalType == OrbitalType.dxxyy )
-%                 azimuthalType = AzimuthalType.dAzimuthal;
+%             if(orbitalType == EnumOrbital.s)
+%                 azimuthalType = EnumAzimuthal.sAzimuthal;
+%             elseif(orbitalType == EnumOrbital.px || orbitalType == EnumOrbital.py ||orbitalType == EnumOrbital.pz )
+%                 azimuthalType = EnumAzimuthal.pAzimuthal;
+%             elseif(orbitalType == EnumOrbital.dxy || orbitalType == EnumOrbital.dyz ||orbitalType == EnumOrbital.dzz || orbitalType == EnumOrbital.dzx ||orbitalType == EnumOrbital.dxxyy )
+%                 azimuthalType = EnumAzimuthal.dAzimuthal;
 %             else
 %                 throw(MException('GTOExpansionSTO:GetExponent', 'Orbital type wrong.'));
 %             end
@@ -32,12 +32,12 @@ classdef (Sealed) GTOExpansionSTO < handle
         end
         
         function res = GetCoefficient(obj, stonG, shellType, orbitalType, index)
-%             if(orbitalType == OrbitalType.s)
-%                 azimuthalType = AzimuthalType.sAzimuthal;
-%             elseif(orbitalType == OrbitalType.px || orbitalType == OrbitalType.py ||orbitalType == OrbitalType.pz )
-%                 azimuthalType = AzimuthalType.pAzimuthal;
-%             elseif(orbitalType == OrbitalType.dxy || orbitalType == OrbitalType.dyz ||orbitalType == OrbitalType.dzz || orbitalType == OrbitalType.dzx ||orbitalType == OrbitalType.dxxyy )
-%                 azimuthalType = AzimuthalType.dAzimuthal;
+%             if(orbitalType == EnumOrbital.s)
+%                 azimuthalType = EnumAzimuthal.sAzimuthal;
+%             elseif(orbitalType == EnumOrbital.px || orbitalType == EnumOrbital.py ||orbitalType == EnumOrbital.pz )
+%                 azimuthalType = EnumAzimuthal.pAzimuthal;
+%             elseif(orbitalType == EnumOrbital.dxy || orbitalType == EnumOrbital.dyz ||orbitalType == EnumOrbital.dzz || orbitalType == EnumOrbital.dzx ||orbitalType == EnumOrbital.dxxyy )
+%                 azimuthalType = EnumAzimuthal.dAzimuthal;
 %             else
 %                 throw(MException('GTOExpansionSTO:GetCoefficient', 'Orbital type wrong.'));
 %             end

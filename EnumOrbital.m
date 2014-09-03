@@ -1,4 +1,4 @@
-classdef OrbitalType < uint8
+classdef EnumOrbital < uint8
     enumeration
         s(1)
         py(2)
@@ -9,6 +9,6 @@ classdef OrbitalType < uint8
         dzz(7)
         dzx(8)
         dxxyy(9)
-        OrbitalType_end(10)
+        EnumOrbital_end(10)
     end
 end

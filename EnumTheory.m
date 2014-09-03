@@ -1,4 +1,4 @@
-classdef TheoryType < uint8
+classdef EnumTheory < uint8
     enumeration
         CNDO2(1)
         INDO(2)

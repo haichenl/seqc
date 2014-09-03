@@ -3,12 +3,12 @@ classdef AtomFactory < handle
     methods (Static)
         
         function atom = Create(atomType, index, xyz, charge)
-            if(atomType == AtomType.H)
-                atom = HAtom(index);
-            elseif(atomType == AtomType.C)
-                atom = CAtom(index);
-            elseif(atomType == AtomType.Cl)
-                atom = ClAtom(index);
+            if(atomType == EnumAtom.H)
+                atom = AtomH(index);
+            elseif(atomType == EnumAtom.C)
+                atom = AtomC(index);
+            elseif(atomType == EnumAtom.Cl)
+                atom = AtomCl(index);
             else
                 throw(MException('AtomFactory:Create', 'Atom type not implemented yet.'));
             end

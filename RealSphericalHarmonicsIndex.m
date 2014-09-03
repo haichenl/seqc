@@ -10,31 +10,31 @@ classdef RealSphericalHarmonicsIndex < handle
         function obj = RealSphericalHarmonicsIndex(arg1, arg2) % OrbitalType orbitalType
             if(nargin == 1)
                 orbitalType = arg1;
-                if(orbitalType == OrbitalType.s)
+                if(orbitalType == 1)
                     obj.l = 0;
                     obj.m = 0;
-                elseif(orbitalType == OrbitalType.py)
+                elseif(orbitalType == 2)
                     obj.l = 1;
                     obj.m = -1;
-                elseif(orbitalType == OrbitalType.pz)
+                elseif(orbitalType == 3)
                     obj.l = 1;
                     obj.m = 0;
-                elseif(orbitalType == OrbitalType.px)
+                elseif(orbitalType == 4)
                     obj.l = 1;
                     obj.m = 1;
-                elseif(orbitalType == OrbitalType.dxy)
+                elseif(orbitalType == 5)
                     obj.l = 2;
                     obj.m = -2;
-                elseif(orbitalType == OrbitalType.dyz)
+                elseif(orbitalType == 6)
                     obj.l = 2;
                     obj.m = -1;
-                elseif(orbitalType == OrbitalType.dzz)
+                elseif(orbitalType == 7)
                     obj.l = 2;
                     obj.m = 0;
-                elseif(orbitalType == OrbitalType.dzx)
+                elseif(orbitalType == 8)
                     obj.l = 2;
                     obj.m = 1;
-                elseif(orbitalType == OrbitalType.dxxyy)
+                elseif(orbitalType == 9)
                     obj.l = 2;
                     obj.m = 2;
                 else

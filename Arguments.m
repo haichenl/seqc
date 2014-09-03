@@ -1,4 +1,4 @@
-classdef (Sealed) Parameters < handle
+classdef (Sealed) Arguments < handle
     
     properties (Constant)
         
@@ -157,6 +157,9 @@ classdef (Sealed) Parameters < handle
             end
         end
         
+        function SetCurrentTheory(obj, currTheory)
+            obj.currentTheory = currTheory;
+        end
         function res = GetCurrentTheory(obj)
             res = obj.currentTheory;
         end
@@ -165,12 +168,12 @@ classdef (Sealed) Parameters < handle
     
     methods (Access = private)
         
-        function obj = Parameters()
+        function obj = Arguments()
             obj.SetDefaultValues();
         end
         
         function SetDefaultValues(obj)
-            obj.currentTheory = TheoryType.CNDO2;
+            obj.currentTheory = EnumTheory.CNDO2;
             % SCF
             obj.thresholdSCF        = 1.0e-8;
             obj.maxIterationsSCF    = 100;
@@ -191,7 +194,7 @@ classdef (Sealed) Parameters < handle
         function singleObj = GetInstance()
             persistent localObj
             if isempty(localObj) || ~isvalid(localObj)
-                localObj = Parameters();
+                localObj = Arguments();
             end
             singleObj = localObj;
         end

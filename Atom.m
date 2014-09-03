@@ -166,13 +166,13 @@ classdef Atom < handle
         end
         
         function res = GetEffectivePrincipalQuantumNumber(~, shellType) % ShellType shellType
-%             if(shellType == 1) % ShellType.kShell)
+%             if(shellType == 1) % EnumShell.kShell)
 %                 res = 1.0;
-%             elseif(shellType == 2) % ShellType.lShell)
+%             elseif(shellType == 2) % EnumShell.lShell)
 %                 res = 2.0;
-%             elseif(shellType == 3) % ShellType.mShell)
+%             elseif(shellType == 3) % EnumShell.mShell)
 %                 res = 3.0;
-%             elseif(shellType == 4) % ShellType.nShell)
+%             elseif(shellType == 4) % EnumShell.nShell)
 %                 res = 3.7;
 %             else
 %                 throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
@@ -195,23 +195,23 @@ classdef Atom < handle
         
         function res = GetRealAngularPartAO(~, theta, phi, orbital) % OrbitalType orbital
             switch(orbital)
-                case 1 % OrbitalType.s
+                case 1 % EnumOrbital.s
                     res = power(4.0*pi,-0.5);
-                case 2 % OrbitalType.py
+                case 2 % EnumOrbital.py
                     res = power(3.0/(4.0*pi),0.5)*sin(theta)*sin(phi);
-                case 3 % OrbitalType.pz
+                case 3 % EnumOrbital.pz
                     res = power(3.0/(4.0*pi),0.5)*cos(theta);
-                case 4 % OrbitalType.px
+                case 4 % EnumOrbital.px
                     res = power(3.0/(4.0*pi),0.5)*sin(theta)*cos(phi);
-                case 5 % OrbitalType.dxy
+                case 5 % EnumOrbital.dxy
                     res = power(15.0/(16.0*pi),0.5)*power(sin(theta),2.0)*sin(2.0*phi);
-                case 6 % OrbitalType.dyz
+                case 6 % EnumOrbital.dyz
                     res = power(15.0/(16.0*pi),0.5)*sin(2.0*theta)*sin(phi);
-                case 7 % OrbitalType.dzz
+                case 7 % EnumOrbital.dzz
                     res = power(5.0/(16.0*pi),0.5)*(3.0*power(cos(theta),2.0) - 1.0);
-                case 8 % OrbitalType.dzx
+                case 8 % EnumOrbital.dzx
                     res = power(15.0/(16.0*pi),0.5)*sin(2.0*theta)*cos(phi);
-                case 9 % OrbitalType.dxxyy
+                case 9 % EnumOrbital.dxxyy
                     res = power(15.0/(16.0*pi),0.5)*power(sin(theta),2.0)*cos(2.0*phi);
                 otherwise
                     throw(MException('Atom:GetRealAngularPartAO', 'Orbital type not possible'));

@@ -962,14 +962,14 @@ zvec = [ ...
 ];
 
 
-ShellType_end = double(ShellType.ShellType_end);
+EnumShell_end = double(EnumShell.EnumShell_end);
 
-Z = zeros(2*(ShellType_end-1), 2*(ShellType_end-1), 4*(ShellType_end-1)-1);
+Z = zeros(2*(EnumShell_end-1), 2*(EnumShell_end-1), 4*(EnumShell_end-1)-1);
 
 iter = 1;
-for a = 1:2*(ShellType_end-1)
-    for b = 1:2*(ShellType_end-1)
-        for c = 1:4*(ShellType_end-1)-1
+for a = 1:2*(EnumShell_end-1)
+    for b = 1:2*(EnumShell_end-1)
+        for c = 1:4*(EnumShell_end-1)-1
             Z(a,b,c) = zvec(iter);
             iter = iter + 1;
         end
