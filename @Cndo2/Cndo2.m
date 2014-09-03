@@ -1545,50 +1545,13 @@ classdef Cndo2 < handle
         end
         
         function h1Matrix = CalcH1Matrix(obj)
-            isGuess = false;
-            totalNumberAOs   = obj.molecule.totalNumberAOs;
-            atomvect = obj.molecule.atomVect;
-            totalNumberAtoms = length(atomvect);
-            h1Matrix = zeros(totalNumberAOs);
-            
-            h1offdiag = zeros(totalNumberAOs);
-            for A = 1:totalNumberAtoms
-                atomA = atomvect{A};
-                firstAOIndexA = atomA.firstAOIndex;
-                lastAOIndexA  = atomA.GetLastAOIndex();
-                
-                % diag
-                mu = firstAOIndexA:lastAOIndexA;
-                indexAtomA = atomA.index;
-                value = obj.AtomGetCoreIntegral(atomA, atomA.valence(mu-firstAOIndexA+1), ...
-                    obj.gammaAB(indexAtomA, indexAtomA), ...
-                    isGuess);
-                
-                temp = 0.0;
-                for BB = 1:length(atomvect)
-                    if(BB ~= indexAtomA)
-                        atomBB = atomvect{BB};
-                        temp = temp + ( - atomBB.coreCharge  )...
-                            *obj.gammaAB(indexAtomA, BB);
-                    end
-                end
-                value = value + temp;
-                h1Matrix(mu, mu) = diag(value);
-                
-                % offdiag
-                for B = A:totalNumberAtoms % upper part
-                    atomB = atomvect{B};
-                    firstAOIndexB = atomB.firstAOIndex;
-                    lastAOIndexB  = atomB.GetLastAOIndex();
-                    nu = firstAOIndexB:lastAOIndexB;
-                    K = obj.GetBondingAdjustParameterK(atomA.valenceShellType, atomB.valenceShellType);
-                    bondParameter = 0.5*K*(obj.AtomGetBondingParameter(atomA) + obj.AtomGetBondingParameter(atomB));
-                    value =  bondParameter*obj.overlapAOs(mu, nu);
-                    h1offdiag(firstAOIndexA:lastAOIndexA, firstAOIndexB:lastAOIndexB) = value;
-                end
-            end % end of loop A
-            h1offdiag = h1offdiag - tril(h1offdiag);
-            h1Matrix = h1Matrix + h1offdiag + h1offdiag';
+            bkupOrbitalElectronPopulation = obj.orbitalElectronPopulation;
+            bkupAtomicElectronPopulation = obj.atomicElectronPopulation;
+            obj.orbitalElectronPopulation = zeros(size(obj.orbitalElectronPopulation));
+            obj.atomicElectronPopulation = zeros(size(obj.atomicElectronPopulation));
+            h1Matrix = obj.CalcFockMatrix(false);
+            obj.orbitalElectronPopulation = bkupOrbitalElectronPopulation;
+            obj.atomicElectronPopulation = bkupAtomicElectronPopulation;
         end
         
         function res = RotateDiatmicOverlapAOsToSpaceFrame(~, diatomicOverlapAOs, rotatingMatrix)
