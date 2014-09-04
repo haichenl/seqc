@@ -28,6 +28,12 @@ classdef Molecule < handle
             obj.epcVect{end+1} = epc;
         end
         
+        function AddParamPoolsIntoManager(obj, paramPoolManager)
+            for i = 1:length(obj.atomVect)
+                paramPoolManager.AddParamPool(obj.atomVect{i}.paramPool);
+            end
+        end
+        
         function res = GetXyzDipoleCenter(obj)
             res = obj.xyzCOC;
         end

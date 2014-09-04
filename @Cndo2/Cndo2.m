@@ -10,6 +10,7 @@ classdef Cndo2 < handle
         coreEpcCoulombEnergy;
         vdWCorrectionEnergy;
         matrixCISdimension;
+        h1Matrix;
         fockMatrix;
         energiesMO;
         orbitalElectronPopulation; %P_{\mu\nu} of (2.50) in J. A. Pople book.
@@ -127,9 +128,9 @@ classdef Cndo2 < handle
                 obj.gammaAB = obj.CalcGammaAB();
             end
             obj.overlapAOs = obj.CalcOverlapAOs();
-            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
+%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
 %             [obj.twoElecsTwoAtomCores, obj.twoElecsAtomEpcCores] = obj.CalcTwoElecsTwoCores(obj.molecule);
-            
+            obj.h1Matrix = obj.CalcFockMatrix(false);
         end
         
         function DoSCF(obj)
@@ -1740,7 +1741,7 @@ classdef Cndo2 < handle
             % use density matrix for electronic energy
             isGuess = false;
             fMatrix = obj.CalcFockMatrix(isGuess);
-            hMatrix = obj.CalcH1Matrix();
+            hMatrix = obj.h1Matrix;
             electronicEnergy = sum(sum(obj.orbitalElectronPopulation .* (hMatrix+fMatrix)));
             electronicEnergy = electronicEnergy * 0.5;
             

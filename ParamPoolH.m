@@ -11,7 +11,7 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.coreCharge = 1.0;
             
             % cndo/2
-            obj.cndo2ValidParams = [1;2;5];
+            obj.cndo2ValidParams = [1,2,5];
             obj.bondingParameter = -9.0*Arguments.GetInstance().GetEV2AU();
             obj.imuAmuS = 7.176*Arguments.GetInstance().GetEV2AU();
             obj.imuAmuP = 0.0;

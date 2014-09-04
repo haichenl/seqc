@@ -7,6 +7,12 @@ classdef AtomFactory < handle
                 atom = AtomH(index);
             elseif(atomType == EnumAtom.C)
                 atom = AtomC(index);
+            elseif(atomType == EnumAtom.N)
+                atom = AtomN(index);
+            elseif(atomType == EnumAtom.O)
+                atom = AtomO(index);
+            elseif(atomType == EnumAtom.F)
+                atom = AtomF(index);
             elseif(atomType == EnumAtom.Cl)
                 atom = AtomCl(index);
             else
