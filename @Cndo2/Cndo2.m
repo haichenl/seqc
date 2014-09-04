@@ -194,7 +194,8 @@ classdef Cndo2 < handle
                 
                 % SCF fails
                 if(iterationStep==maxIterationsSCF-1)
-                    throw(MException('Cndo2:DoSCF', 'SCF not converged.'));
+%                     throw(MException('Cndo2:DoSCF', 'SCF not converged.'));
+                    disp('SCF not converged.');
                 end
             end
         end
