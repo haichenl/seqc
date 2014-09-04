@@ -122,15 +122,6 @@ classdef Cndo2 < handle
 %                 }
             obj.electronicTransitionDipoleMoments = zeros(electronicTransitionDipoleMomentsDim);
             obj.coreDipoleMoment = zeros(3, 1);
-            
-            % calculate electron integral
-            if(uint8(obj.theory) == uint8(EnumTheory.CNDO2) || uint8(obj.theory) == uint8(EnumTheory.INDO))
-                obj.gammaAB = obj.CalcGammaAB();
-            end
-            obj.overlapAOs = obj.CalcOverlapAOs();
-%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
-%             [obj.twoElecsTwoAtomCores, obj.twoElecsAtomEpcCores] = obj.CalcTwoElecsTwoCores(obj.molecule);
-            obj.h1Matrix = obj.CalcFockMatrix(false);
         end
         
         function DoSCF(obj)
@@ -144,6 +135,15 @@ classdef Cndo2 < handle
                 diisErrorProducts = zeros(diisNumErrorVect+1);
                 diisErrorCoefficients = zeros(diisNumErrorVect+1, 1);
             end
+            
+            % calculate electron integral
+            if(uint8(obj.theory) == uint8(EnumTheory.CNDO2) || uint8(obj.theory) == uint8(EnumTheory.INDO))
+                obj.gammaAB = obj.CalcGammaAB();
+            end
+            obj.overlapAOs = obj.CalcOverlapAOs();
+%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
+%             [obj.twoElecsTwoAtomCores, obj.twoElecsAtomEpcCores] = obj.CalcTwoElecsTwoCores(obj.molecule);
+            obj.h1Matrix = obj.CalcH1Matrix();
             
             % SCF
             maxIterationsSCF = Arguments.GetInstance().maxIterationsSCF;
@@ -1708,7 +1708,9 @@ classdef Cndo2 < handle
 %                     hasAppliedDIIS = false;
 %                     continue;
 %                 end
+                warning('off','MATLAB:nearlySingularMatrix');
                 diisErrorCoefficients = tmpDiisErrorProducts \ diisErrorCoefficients;
+                warning('on','MATLAB:nearlySingularMatrix');
                 orbitalElectronPopulation = reshape(diisStoredDensityMatrix * diisErrorCoefficients(1:end-1), totalNumberAOs, totalNumberAOs);
             end
             % diis end
