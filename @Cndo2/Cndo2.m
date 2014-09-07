@@ -57,8 +57,6 @@ classdef Cndo2 < handle
     methods (Access = public)
         
         function obj = Cndo2()
-            Arguments.GetInstance().SetCurrentTheory(EnumTheory.CNDO2);
-            
             %protected variables
             obj.molecule = [];
             obj.theory = EnumTheory.CNDO2;
@@ -142,7 +140,7 @@ classdef Cndo2 < handle
             end
             obj.overlapAOs = obj.CalcOverlapAOs();
 %             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
-%             [obj.twoElecsTwoAtomCores, obj.twoElecsAtomEpcCores] = obj.CalcTwoElecsTwoCores(obj.molecule);
+            obj.CalcTwoElecsTwoCores();
             obj.h1Matrix = obj.CalcH1Matrix();
             
             % SCF
@@ -152,7 +150,7 @@ classdef Cndo2 < handle
                 oldOrbitalElectronPopulation = obj.orbitalElectronPopulation;
                 
                 isGuess = (iterationStep==0 && requiresGuess);
-                % continue here
+                
                 obj.fockMatrix = obj.CalcFockMatrix(isGuess);
                 
                 % diagonalization of the Fock matrix
@@ -729,7 +727,6 @@ classdef Cndo2 < handle
                     valenceOrbitalB = atomB.valence(b);
                     realShpericalHarmonicsB = atomB.realSphericalHarmonicsIndices{b};
                     orbitalExponentB = obj.AtomGetOrbitalExponent(atomB, atomB.valenceShellType, valenceOrbitalB);
-
                     if(realShpericalHarmonicsA.m == realShpericalHarmonicsB.m)
                         m = abs(realShpericalHarmonicsA.m);
                         alpha = orbitalExponentA * rAB;
@@ -1061,12 +1058,10 @@ classdef Cndo2 < handle
         %                                               double const* const* fockMatrix,
         %                                               double const* const* gammaAB) const;
         
-%         function [twoElecsTwoAtomCores, twoElecsAtomEpcCores] = CalcTwoElecsTwoCores(~, ~)
-%             % do nothing for CNDO, INDO, and ZINDO/S.
-%             % two electron two core integrals are not needed for CNDO, INDO, and ZINDO/S.
-%             twoElecsTwoAtomCores = [];
-%             twoElecsAtomEpcCores = [];
-%         end
+        function CalcTwoElecsTwoCores(~)
+            % do nothing for CNDO, INDO, and ZINDO/S.
+            % two electron two core integrals are not needed for CNDO, INDO, and ZINDO/S.
+        end
         
         %    virtual void CalcForce(const std::vector<int>& elecStates);
         
@@ -1264,6 +1259,81 @@ classdef Cndo2 < handle
             
             % for d-function
             % ToDo: Second derivative of rotating matrix for d-orbital...
+        end
+        
+        function res = AtomGetOrbitalExponent(~, atom, shellType, orbitalType)
+            if(shellType == 1 && orbitalType == 1) % kShell, s
+                res = atom.paramPool.effectiveNuclearChargeK/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 2 && (orbitalType == 1  || ...
+                    orbitalType == 4 || ...
+                    orbitalType == 2 || ...
+                    orbitalType == 3)) % lShell, s px py pz
+                res = atom.paramPool.effectiveNuclearChargeL/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 3 && (orbitalType == 1  || ...
+                    orbitalType == 4 || ...
+                    orbitalType == 2 || ...
+                    orbitalType == 3 )) % mShell, s px py pz
+                res = atom.paramPool.effectiveNuclearChargeMsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 3 && (orbitalType == 5  || ...
+                    orbitalType == 6 ||...
+                    orbitalType == 7 ||...
+                    orbitalType == 8 ||...
+                    orbitalType == 9)) % mShell, dxy dyz dzz dzx dxxyy
+                res = atom.paramPool.effectiveNuclearChargeMd/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            elseif(shellType == 4 && (1  || ...
+                    orbitalType == 4 || ...
+                    orbitalType == 2 || ...
+                    orbitalType == 3 )) % nShell, s px py pz
+                res = atom.paramPool.effectiveNuclearChargeNsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+            else
+                throw(MException('Cndo2:AtomGetOrbitalExponent', 'Shell/Orbital type wrong.'));
+            end
+        end
+        
+%         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
+%             if(orbital == 1) % s
+%                 res = -1.0*atom.imuAmuS;
+%             elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
+%                 res = -1.0*atom.imuAmuP;
+%             elseif(orbital == 5 || ...
+%                     orbital == 6 || ...
+%                     orbital == 7 || ...
+%                     orbital == 8 || ...
+%                     orbital == 9 ) % dxy dyz dzz dzx dxxyy
+%                 res = -1.0*atom.imuAmuD;
+%             else
+%                 throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
+%             end
+%             if(~isGuess)
+%                 res = res - (atom.coreCharge - 0.5)*gamma;
+%             end
+%         end
+        
+        % vectorized version of the above function
+        function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
+            res = zeros(length(orbital), 1);
+            for i = 1:length(orbital)
+                if(orbital(i) == 1) % s
+                    res(i) = -1.0*atom.paramPool.imuAmuS;
+                elseif(orbital(i) == 4 || orbital(i) == 2 || orbital(i) == 3) % py pz px
+                    res(i) = -1.0*atom.paramPool.imuAmuP;
+                elseif(orbital(i) == 5 || ...
+                        orbital(i) == 6 || ...
+                        orbital(i) == 7 || ...
+                        orbital(i) == 8 || ...
+                        orbital(i) == 9 ) % dxy dyz dzz dzx dxxyy
+                    res(i) = -1.0*atom.paramPool.imuAmuD;
+                else
+                    throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
+                end
+            end
+            if(~isGuess)
+                res = res - (atom.coreCharge - 0.5)*gamma;
+            end
+        end
+        
+        function res = AtomGetBondingParameter(~, atom)
+            res = atom.paramPool.bondingParameter;
         end
         
     end
@@ -1523,27 +1593,50 @@ classdef Cndo2 < handle
             totalNumberAtoms = length(atomvect);
             fockMatrix = zeros(totalNumberAOs);
             
-            fockoffdiag = zeros(totalNumberAOs);
+            % element-wise loop version
             for A = 1:totalNumberAtoms
                 atomA = atomvect{A};
                 firstAOIndexA = atomA.firstAOIndex;
                 lastAOIndexA  = atomA.GetLastAOIndex();
-                
-                % diag
-                mu = firstAOIndexA:lastAOIndexA;
-                fockMatrix(mu, mu) = diag(obj.GetFockDiagElement(atomA, mu, isGuess));
-                
-                % offdiag
-                for B = A:totalNumberAtoms % upper part
-                    atomB = atomvect{B};
-                    firstAOIndexB = atomB.firstAOIndex;
-                    lastAOIndexB  = atomB.GetLastAOIndex();
-                    nu = firstAOIndexB:lastAOIndexB;
-                    fockoffdiag(mu, nu) = obj.GetFockOffDiagElement(atomA, atomB, mu, nu, isGuess);
+                for mu = firstAOIndexA:lastAOIndexA;
+                    for B = A:totalNumberAtoms % upper part
+                        atomB = atomvect{B};
+                        firstAOIndexB = atomB.firstAOIndex;
+                        lastAOIndexB  = atomB.GetLastAOIndex();
+                        for nu = firstAOIndexB:lastAOIndexB;
+                            if(mu == nu) % diag
+                                fockMatrix(mu, mu) = obj.GetFockDiagElement(atomA, mu, isGuess);
+                            elseif(mu < nu) % offdiag
+                                fockMatrix(mu, nu) = obj.GetFockOffDiagElement(atomA, atomB, mu, nu, isGuess);
+                            end
+                        end
+                    end
                 end
             end % end of loop A
-            fockoffdiag = fockoffdiag - tril(fockoffdiag);
-            fockMatrix = fockMatrix + fockoffdiag + fockoffdiag';
+            fockMatrix = fockMatrix + fockMatrix' - diag(diag(fockMatrix));
+            
+            % atomically vectorized version
+%             fockoffdiag = zeros(totalNumberAOs);
+%             for A = 1:totalNumberAtoms
+%                 atomA = atomvect{A};
+%                 firstAOIndexA = atomA.firstAOIndex;
+%                 lastAOIndexA  = atomA.GetLastAOIndex();
+%                 
+%                 % diag
+%                 mu = firstAOIndexA:lastAOIndexA;
+%                 fockMatrix(mu, mu) = diag(obj.GetFockDiagElement(atomA, mu, isGuess));
+%                 
+%                 % offdiag
+%                 for B = A:totalNumberAtoms % upper part
+%                     atomB = atomvect{B};
+%                     firstAOIndexB = atomB.firstAOIndex;
+%                     lastAOIndexB  = atomB.GetLastAOIndex();
+%                     nu = firstAOIndexB:lastAOIndexB;
+%                     fockoffdiag(mu, nu) = obj.GetFockOffDiagElement(atomA, atomB, mu, nu, isGuess);
+%                 end
+%             end % end of loop A
+%             fockoffdiag = fockoffdiag - tril(fockoffdiag);
+%             fockMatrix = fockMatrix + fockoffdiag + fockoffdiag';
         end
         
         function h1Matrix = CalcH1Matrix(obj)
@@ -1752,81 +1845,6 @@ classdef Cndo2 < handle
                 +obj.coreRepulsionEnergy...
                 +obj.coreEpcCoulombEnergy...
                 +obj.vdWCorrectionEnergy;
-        end
-        
-        function res = AtomGetOrbitalExponent(~, atom, shellType, orbitalType)
-            if(shellType == 1 && orbitalType == 1) % kShell, s
-                res = atom.paramPool.effectiveNuclearChargeK/atom.GetEffectivePrincipalQuantumNumber(shellType);
-            elseif(shellType == 2 && (orbitalType == 1  || ...
-                    orbitalType == 4 || ...
-                    orbitalType == 2 || ...
-                    orbitalType == 3)) % lShell, s py pz px
-                res = atom.paramPool.effectiveNuclearChargeL/atom.GetEffectivePrincipalQuantumNumber(shellType);
-            elseif(shellType == 3 && (orbitalType == 1  || ...
-                    orbitalType == 4 || ...
-                    orbitalType == 2 || ...
-                    orbitalType == 3 )) % mShell, s py pz px
-                res = atom.paramPool.effectiveNuclearChargeMsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
-            elseif(shellType == 3 && (orbitalType == 5  || ...
-                    orbitalType == 6 ||...
-                    orbitalType == 7 ||...
-                    orbitalType == 8 ||...
-                    orbitalType == 9)) % mShell, dxy dyz dzz dzx dxxyy
-                res = atom.paramPool.effectiveNuclearChargeMd/atom.GetEffectivePrincipalQuantumNumber(shellType);
-            elseif(shellType == 4 && (1  || ...
-                    orbitalType == 4 || ...
-                    orbitalType == 2 || ...
-                    orbitalType == 3 )) % nShell, dxy dyz dzz dzx dxxyy
-                res = atom.paramPool.effectiveNuclearChargeNsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
-            else
-                throw(MException('Cndo2:AtomGetOrbitalExponent', 'Shell/Orbital type wrong.'));
-            end
-        end
-        
-%         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
-%             if(orbital == 1) % s
-%                 res = -1.0*atom.imuAmuS;
-%             elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
-%                 res = -1.0*atom.imuAmuP;
-%             elseif(orbital == 5 || ...
-%                     orbital == 6 || ...
-%                     orbital == 7 || ...
-%                     orbital == 8 || ...
-%                     orbital == 9 ) % dxy dyz dzz dzx dxxyy
-%                 res = -1.0*atom.imuAmuD;
-%             else
-%                 throw(MException('CNDO2:AtomGetCndo2CoreIntegral', 'Orbital type wrong.'));
-%             end
-%             if(~isGuess)
-%                 res = res - (atom.coreCharge - 0.5)*gamma;
-%             end
-%         end
-        
-        % vectorized version of the above function
-        function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
-            res = zeros(length(orbital), 1);
-            for i = 1:length(orbital)
-                if(orbital(i) == 1) % s
-                    res(i) = -1.0*atom.paramPool.imuAmuS;
-                elseif(orbital(i) == 4 || orbital(i) == 2 || orbital(i) == 3) % py pz px
-                    res(i) = -1.0*atom.paramPool.imuAmuP;
-                elseif(orbital(i) == 5 || ...
-                        orbital(i) == 6 || ...
-                        orbital(i) == 7 || ...
-                        orbital(i) == 8 || ...
-                        orbital(i) == 9 ) % dxy dyz dzz dzx dxxyy
-                    res(i) = -1.0*atom.paramPool.imuAmuD;
-                else
-                    throw(MException('CNDO2:AtomGetCndo2CoreIntegral', 'Orbital type wrong.'));
-                end
-            end
-            if(~isGuess)
-                res = res - (atom.coreCharge - 0.5)*gamma;
-            end
-        end
-        
-        function res = AtomGetBondingParameter(~, atom)
-            res = atom.paramPool.bondingParameter;
         end
         
     end

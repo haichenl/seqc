@@ -2,6 +2,7 @@ classdef (Abstract) ParamPoolBase < handle
     
     methods (Access = public)
         
+        % cndo2
         function SetCndo2Params(obj, cndo2params)
             if(length(cndo2params) ~= length(obj.cndo2ValidParams))
                 throw(MException('ParamPoolBase:SetCndo2Params', 'Wrong number of input parameters.'));
@@ -33,7 +34,6 @@ classdef (Abstract) ParamPoolBase < handle
                 iter = iter + 1;
             end
         end
-        
         function cndo2params = GetCndo2Params(obj)
             cndo2params = zeros(length(obj.cndo2ValidParams), 1);
             iter = 1;
@@ -62,6 +62,59 @@ classdef (Abstract) ParamPoolBase < handle
                 end
                 iter = iter + 1;
             end
+        end
+        
+        % zindos
+        function res = GetZindoJss(obj)
+            res = obj.zindoF0ss;
+        end
+        function res = GetZindoJsp(obj)
+            res = obj.zindoF0ss - obj.zindoG1sp/6.0;
+        end
+        function res = GetZindoJsd(obj)
+            res = obj.zindoF0sd - obj.zindoG2sd/10.0;
+        end
+        function res = GetZindoJpp(obj)
+            res = obj.zindoF0ss - 2.0*obj.zindoF2pp/25.0;
+        end
+        function res = GetZindoJpd(obj)
+            res = obj.zindoF0sd - obj.zindoG1pd/15.0 - 3.0*obj.zindoG3pd/70.0;
+        end
+        function res = GetZindoJdd(obj)
+            res = obj.zindoF0dd - 2.0*(obj.zindoF2dd + obj.zindoF4dd)/63.0;
+        end
+        function res = GetZindoF0ssLower(obj)
+            res = obj.zindoF0ss;
+        end
+        function res = GetZindoF0sdLower(obj)
+            res = obj.zindoF0sd;
+        end
+        function res = GetZindoF0ddLower(obj)
+            res = obj.zindoF0dd;
+        end
+        function res = GetZindoG1spLower(obj)
+            res = obj.zindoG1sp/3.0;
+        end
+        function res = GetZindoF2ppLower(obj)
+            res = obj.zindoF2pp/25.0;
+        end
+        function res = GetZindoG2sdLower(obj)
+            res = obj.zindoG2sd/5.0;
+        end
+        function res = GetZindoG1pdLower(obj)
+            res = obj.zindoG1pd/15.0;
+        end
+        function res = GetZindoF2pdLower(obj)
+            res = obj.zindoF2pd/35.0;
+        end
+        function res = GetZindoG3pdLower(obj)
+            res = obj.zindoG3pd/245.0;
+        end
+        function res = GetZindoF2ddLower(obj)
+            res = obj.zindoF2dd/49.0;
+        end
+        function res = GetZindoF4ddLower(obj)
+            res = obj.zindoF4dd/441.0;
         end
         
     end
