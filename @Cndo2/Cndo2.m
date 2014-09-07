@@ -155,12 +155,13 @@ classdef Cndo2 < handle
                 
                 % diagonalization of the Fock matrix
                 [orbital, eigenvalue] = eig(obj.fockMatrix);
+                
                 [obj.energiesMO, order] = sort(diag(eigenvalue));
                 orbital = orbital(:, order);
                 numberTotalValenceElectrons = obj.molecule.totalNumberValenceElectrons;
                 obj.orbitalElectronPopulation = 2 .* orbital(:, 1:numberTotalValenceElectrons/2) ...
                     *orbital(:, 1:numberTotalValenceElectrons/2)';
-                
+               disp(['iter', num2str(iterationStep)]);
                 % check convergence
                 hasConverged = obj.SatisfyConvergenceCriterion(oldOrbitalElectronPopulation, ...
                     obj.orbitalElectronPopulation);
@@ -1053,10 +1054,29 @@ classdef Cndo2 < handle
             end
         end
         
-        %    virtual double GetMolecularIntegralElement(int moI, int moJ, int moK, int moL,
-        %                                               const MolDS_base::Molecule& molecule,
-        %                                               double const* const* fockMatrix,
-        %                                               double const* const* gammaAB) const;
+        function value = GetMolecularIntegralElement(obj, moI, moJ, moK, moL)
+            value = 0.0;
+            for A = 1:length(obj.molecule.atomVect)
+                atomA = obj.molecule.atomVect{A};
+                firstAOIndexA = atomA.GetFirstAOIndex();
+                lastAOIndexA  = atomA.GetLastAOIndex();
+                
+                for B = 1:length(obj.molecule.atomVect)
+                    atomB = obj.molecule.atomVect{B};
+                    firstAOIndexB = atomB.GetFirstAOIndex();
+                    lastAOIndexB  = atomB.GetLastAOIndex();
+                    gamma = obj.gammaAB(A, B);
+                    
+                    for mu = firstAOIndexA:lastAOIndexA
+                        for nu = firstAOIndexB:lastAOIndexB
+                            value = value + gamma*obj.fockMatrix(moI,mu)*obj.fockMatrix(moJ,mu)*obj.fockMatrix(moK,nu)*obj.fockMatrix(moL,nu);
+                        end
+                    end
+                    
+                end
+            end
+        end
+
         
         function CalcTwoElecsTwoCores(~)
             % do nothing for CNDO, INDO, and ZINDO/S.

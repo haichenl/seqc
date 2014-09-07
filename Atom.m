@@ -57,6 +57,9 @@ classdef (Abstract) Atom < handle
             obj.firstAOIndex = firstAOIndex_in;
         end
         
+        function res = GetFirstAOIndex(obj)
+            res = obj.firstAOIndex;
+        end
         function res = GetLastAOIndex(obj)
             res = obj.firstAOIndex + length(obj.valence) - 1;
         end
