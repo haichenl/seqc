@@ -19,5 +19,6 @@ classdef EnumAtom < uint8
         Cl(17)
         Ar(18)
         Zn(30)
+        EPC(255)
     end
 end

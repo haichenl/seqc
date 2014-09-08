@@ -12,7 +12,7 @@ classdef AtomH < Atom
     methods (Access = protected)
         
         function SetAtomicParameters(obj)
-            obj.atomType = EnumAtom.H;
+            obj.atomType = uint8(EnumAtom.H);
             obj.atomicMass = 1.00794*Arguments.GetInstance().GetGMolin2AU();
             obj.coreCharge = 1.0;
             obj.numberValenceElectrons = 1;

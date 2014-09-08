@@ -139,7 +139,7 @@ classdef Cndo2 < handle
                 obj.gammaAB = obj.CalcGammaAB();
             end
             obj.overlapAOs = obj.CalcOverlapAOs();
-%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
+            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
             obj.CalcTwoElecsTwoCores();
             obj.h1Matrix = obj.CalcH1Matrix();
             
@@ -377,7 +377,7 @@ classdef Cndo2 < handle
             end
             
             value = pre1*tmp1 + pre2*tmp2;
-            value = value * (-1.0*vdWScalingFacotor*vdWCoefficients);
+            value = value .* (-1.0*vdWScalingFacotor*vdWCoefficients);
 
         end
         
@@ -399,13 +399,13 @@ classdef Cndo2 < handle
                     for j = 0:J-1
                         temp = obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1);
                         if(0<abs(temp))
-                            temp = temp * obj.GetAuxiliaryA(i, 0.5*(alpha+beta));
-                            temp = temp * obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
+                            temp = temp .* obj.GetAuxiliaryA(i, 0.5*(alpha+beta));
+                            temp = temp .* obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                             value = value + temp;
                         end
                     end
                 end
-                value = value * obj.GetAuxiliaryD(la, lb, m);
+                value = value .* obj.GetAuxiliaryD(la, lb, m);
             elseif(nargin == 5)
                 na = arg1;
                 nb = arg2;
@@ -415,12 +415,12 @@ classdef Cndo2 < handle
                 for k = 0:na+nb
                     temp = obj.ReducedOverlapAOsParameters_Z(na+1,nb+1,k+1);
                     if(0<abs(temp))
-                        temp = temp * obj.GetAuxiliaryA(k, 0.5*(alpha+beta));
-                        temp = temp * obj.GetAuxiliaryB(na+nb-k, 0.5*(alpha-beta));
+                        temp = temp .* obj.GetAuxiliaryA(k, 0.5*(alpha+beta));
+                        temp = temp .* obj.GetAuxiliaryB(na+nb-k, 0.5*(alpha-beta));
                         value = value + temp;
                     end
                 end
-                value = value * 0.5;
+                value = value .* 0.5;
             else
                 throw(MException('Cndo2:GetReducedOverlapAOs', 'Input argument number wrong.'));
             end
@@ -445,7 +445,7 @@ classdef Cndo2 < handle
                     end
                 end
             end
-            value = value * 0.5*obj.GetAuxiliaryD(la, lb, m);
+            value = value .* 0.5*obj.GetAuxiliaryD(la, lb, m);
         end
         % not tested
         function value = GetReducedOverlapAOs1stDerivativeBeta(obj, na, la, m, nb, lb, alpha, beta)
@@ -465,7 +465,7 @@ classdef Cndo2 < handle
                     end
                 end
             end
-            value = value * 0.5*obj.GetAuxiliaryD(la, lb, m);
+            value = value .* 0.5*obj.GetAuxiliaryD(la, lb, m);
         end
         % not tested
         function value = GetReducedOverlapAOs2ndDerivativeAlpha(obj, na, la, m, nb, lb, alpha, beta)
@@ -487,7 +487,7 @@ classdef Cndo2 < handle
                     end
                 end
             end
-            value = value * 0.25*obj.GetAuxiliaryD(la, lb, m);
+            value = value .* 0.25*obj.GetAuxiliaryD(la, lb, m);
         end
         % not tested
         function value = GetReducedOverlapAOs2ndDerivativeBeta(obj, na, la, m, nb, lb, alpha, beta)
@@ -509,7 +509,7 @@ classdef Cndo2 < handle
                     end
                 end
             end
-            value = value * 0.25*obj.GetAuxiliaryD(la, lb, m);
+            value = value .* 0.25*obj.GetAuxiliaryD(la, lb, m);
         end
         % not tested
         function value = GetReducedOverlapAOs2ndDerivativeAlphaBeta(obj, na, la, m, nb, lb, alpha, beta)
@@ -530,7 +530,7 @@ classdef Cndo2 < handle
                     end
                 end
             end
-            value = value * 0.25*obj.GetAuxiliaryD(la, lb, m);
+            value = value .* 0.25*obj.GetAuxiliaryD(la, lb, m);
         end
         
         %    double GetOverlapAOsElement1stDerivativeByGTOExpansion(const MolDS_base_atoms::Atom& atomA,
@@ -639,36 +639,36 @@ classdef Cndo2 < handle
                     if(R>0.0)
                         % (B.56)
                         value = power(0.5*R, 2.0*na);
-                        value = value * obj.GetReducedOverlapAOs(2*na-1, 0, 2.0*orbitalExponentA*R, 0);
+                        value = value .* obj.GetReducedOverlapAOs(2*na-1, 0, 2.0*orbitalExponentA*R, 0);
                         
                         for l = 1:2*nb
                             temp = l;
-                            temp = temp * power(2.0*orbitalExponentB, 2*nb-l);
-                            temp = temp / (factorial(2*nb-l)*2.0*nb);
-                            temp = temp * power(0.5*R, 2.0*nb-l+2.0*na);
-                            temp = temp * obj.GetReducedOverlapAOs(2*na-1, 2*nb-l, 2.0*orbitalExponentA*R, 2.0*orbitalExponentB*R);
+                            temp = temp .* power(2.0*orbitalExponentB, 2*nb-l);
+                            temp = temp ./ (factorial(2*nb-l)*2.0*nb);
+                            temp = temp .* power(0.5*R, 2.0*nb-l+2.0*na);
+                            temp = temp .* obj.GetReducedOverlapAOs(2*na-1, 2*nb-l, 2.0*orbitalExponentA*R, 2.0*orbitalExponentB*R);
                             value = value - temp;
                         end
                         
-                        value = value * power(2.0*orbitalExponentA, 2.0*na+1.0);
-                        value = value / factorial(2*na);
+                        value = value .* power(2.0*orbitalExponentA, 2.0*na+1.0);
+                        value = value ./ factorial(2*na);
                     else
                         % (B.62)
                         value =  factorial(2*na-1);
-                        value = value / power(2.0*orbitalExponentA, 2.0*na);
+                        value = value ./ power(2.0*orbitalExponentA, 2.0*na);
                         
                         for l = 1:2*nb
                             temp = l;
-                            temp = temp * power(2.0*orbitalExponentB, 2*nb-l);
-%                             temp = temp * factorial(2*na+2*nb-l-1);
-%                             temp = temp / factorial(2*nb-l);
-                            temp = temp * prod(2*nb-l+1:2*na+2*nb-l-1);
-                            temp = temp / (2.0*nb);
-                            temp = temp / power( 2.0*orbitalExponentA + 2.0*orbitalExponentB, 2.0*(na+nb)-l );
+                            temp = temp .* power(2.0*orbitalExponentB, 2*nb-l);
+%                             temp = temp .* factorial(2*na+2*nb-l-1);
+%                             temp = temp ./ factorial(2*nb-l);
+                            temp = temp .* prod(2*nb-l+1:2*na+2*nb-l-1);
+                            temp = temp ./ (2.0*nb);
+                            temp = temp ./ power( 2.0*orbitalExponentA + 2.0*orbitalExponentB, 2.0*(na+nb)-l );
                             value = value - temp;
                         end
-                        value = value * power(2.0*orbitalExponentA, 2.0*na+1);
-                        value = value / factorial(2*na);
+                        value = value .* power(2.0*orbitalExponentA, 2.0*na+1);
+                        value = value ./ factorial(2*na);
                     end
                     gammaAB(A, B) = value;
                 end
@@ -1047,7 +1047,7 @@ classdef Cndo2 < handle
             if(axisA1 ~= axisA2)
                 value = -1.0*firstDistanceDeri/(rAB*rAB*rAB);
                 value = value + secondDistanceDeri/(rAB*rAB);
-                value = value * cartesian(axisA1)*cartesian(axisA2);
+                value = value .* cartesian(axisA1)*cartesian(axisA2);
             else
                 value = (rAB*rAB - cartesian(axisA1)*cartesian(axisA1))*firstDistanceDeri/(rAB*rAB*rAB);
                 value = value + cartesian(axisA1)*cartesian(axisA1)*secondDistanceDeri/(rAB*rAB);
@@ -1524,7 +1524,7 @@ classdef Cndo2 < handle
                         shellTypeA, ...
                         valenceOrbitalA, ...
                         i);
-                    temp = temp * GTOExpansionSTO.GetInstance().GetCoefficient(stonG, ...
+                    temp = temp .* GTOExpansionSTO.GetInstance().GetCoefficient(stonG, ...
                         shellTypeB, ...
                         valenceOrbitalB, ...
                         j);
@@ -1703,7 +1703,7 @@ classdef Cndo2 < handle
 %                 tmp1 = tmp1 + 1.0/(tmp2*factorial(k-mu+1));
                 tmp1 = tmp1 + 1.0/(tmp2/prod(k-mu+2:k));
             end
-            value = value * tmp1;
+            value = value .* tmp1;
         end
         
         function value = GetAuxiliaryB(~, k, rho)
