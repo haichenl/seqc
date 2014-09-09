@@ -21,6 +21,9 @@ classdef (Sealed) ParamPoolO < ParamPoolBase
             obj.effectiveNuclearChargeMsp = 0.0;
             obj.effectiveNuclearChargeMd = 0.0;
             
+            obj.zindo_effectiveNuclearChargeMsp = 0.0;
+            obj.zindo_effectiveNuclearChargeMd = 0.0;
+            
             obj.indoG1 = 0.346029;
             obj.indoF2 = 0.219055;
             obj.indoF0CoefficientS = (obj.coreCharge - 0.5);
@@ -29,6 +32,8 @@ classdef (Sealed) ParamPoolO < ParamPoolBase
             obj.indoG1CoefficientP = -1.0/3.0;
             obj.indoF2CoefficientS = 0.0;
             obj.indoF2CoefficientP = -2.0*(obj.coreCharge - 2.5)/25.0;
+            
+            
             obj.zindoBondingParameterS = -34.0*Arguments.GetInstance().GetEV2AU();
             obj.zindoBondingParameterD = 0.0;
             obj.zindoF0ss = 13.00 * Arguments.GetInstance().GetEV2AU();

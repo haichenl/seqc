@@ -49,8 +49,8 @@ classdef Cndo2 < handle
         gammaAB;
         enableAtomTypesVdW = {};
         
-        ReducedOverlapAOsParameters_Z;
-        ReducedOverlapAOsParameters_Y;
+%         ReducedOverlapAOsParameters_Z;
+%         ReducedOverlapAOsParameters_Y;
    
     end
     
@@ -95,14 +95,26 @@ classdef Cndo2 < handle
             obj.gammaAB = [];
             
             % ReducedOverlapAOsParameters nested class stuff
-            zcontainer = load('cndo2_z.mat', 'Z');
-            ycontainer = load('cndo2_y.mat', 'Y');
-            obj.ReducedOverlapAOsParameters_Z = zcontainer.Z;
-            obj.ReducedOverlapAOsParameters_Y = ycontainer.Y;
+%             zcontainer = load('cndo2_z.mat', 'Z');
+%             ycontainer = load('cndo2_y.mat', 'Y');
+%             obj.ReducedOverlapAOsParameters_Z = zcontainer.Z;
+%             obj.ReducedOverlapAOsParameters_Y = ycontainer.Y;
 
         end
         
         function SetMolecule(obj, mol)
+            
+            % moved third-row atom valence stuffs to here
+            if(uint8(obj.theory) == uint8(EnumTheory.CNDO2))
+                for i = 1:length(mol.atomVect)
+                    atom = mol.atomVect{i};
+                    if(atom.atomType == EnumAtom.Cl)
+                        atom.Set_d_orbitals();
+                    end
+                end
+                mol.CalcBasics();
+            end
+            
             obj.molecule = mol;
             obj.CheckNumberValenceElectrons();
             obj.CheckEnableAtomType();
@@ -161,7 +173,9 @@ classdef Cndo2 < handle
                 numberTotalValenceElectrons = obj.molecule.totalNumberValenceElectrons;
                 obj.orbitalElectronPopulation = 2 .* orbital(:, 1:numberTotalValenceElectrons/2) ...
                     *orbital(:, 1:numberTotalValenceElectrons/2)';
-               disp(['iter', num2str(iterationStep)]);
+                
+                disp(['iter', num2str(iterationStep)]);
+                
                 % check convergence
                 hasConverged = obj.SatisfyConvergenceCriterion(oldOrbitalElectronPopulation, ...
                     obj.orbitalElectronPopulation);
@@ -397,7 +411,7 @@ classdef Cndo2 < handle
                 J = 9;
                 for i = 0:I-1
                     for j = 0:J-1
-                        temp = obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1);
+                        temp = obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j);
                         if(0<abs(temp))
                             temp = temp .* obj.GetAuxiliaryA(i, 0.5*(alpha+beta));
                             temp = temp .* obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
@@ -413,7 +427,7 @@ classdef Cndo2 < handle
                 beta = arg4;
                 value = 0.0;
                 for k = 0:na+nb
-                    temp = obj.ReducedOverlapAOsParameters_Z(na+1,nb+1,k+1);
+                    temp = obj.ReducedOverlapAOsParameters_Z(na,nb,k);
                     if(0<abs(temp))
                         temp = temp .* obj.GetAuxiliaryA(k, 0.5*(alpha+beta));
                         temp = temp .* obj.GetAuxiliaryB(na+nb-k, 0.5*(alpha-beta));
@@ -436,12 +450,12 @@ classdef Cndo2 < handle
             
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
+                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
                         temp1 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 + temp2);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 + temp2);
                     end
                 end
             end
@@ -456,12 +470,12 @@ classdef Cndo2 < handle
             J = 9;
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
+                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
                         temp1 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 - temp2);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 - temp2);
                     end
                 end
             end
@@ -476,14 +490,14 @@ classdef Cndo2 < handle
             J = 9;
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<fabs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
+                    if(0e0<fabs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
                         temp1 = obj.GetAuxiliaryA2ndDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB2ndDerivative(j, 0.5*(alpha-beta));
                         temp3 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la+1,lb+1,m,i,j)*(temp1 + temp2 + 2.0*temp3);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 + temp2 + 2.0*temp3);
                     end
                 end
             end
@@ -498,14 +512,14 @@ classdef Cndo2 < handle
             J = 9;
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
+                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
                         temp1 = obj.GetAuxiliaryA2ndDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB2ndDerivative(j, 0.5*(alpha-beta));
                         temp3 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 + temp2 - 2.0*temp3);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 + temp2 - 2.0*temp3);
                     end
                 end
             end
@@ -1354,6 +1368,68 @@ classdef Cndo2 < handle
         
         function res = AtomGetBondingParameter(~, atom)
             res = atom.paramPool.bondingParameter;
+        end
+        
+        function valueZ = ReducedOverlapAOsParameters_Z(~, na, nb, k) % na nb k are of C convention
+            valueZ = 0.0;
+            for i = 0:na
+               for j = 0:nb
+                  if(i+j == k)
+                     tempZ = power(-1.0, nb-j);
+                     tempZ = tempZ .* nchoosek(na, i);
+                     tempZ = tempZ .* nchoosek(nb, j);
+                     valueZ = valueZ + tempZ;
+                  end
+               end
+            end
+        end
+        
+        function valueY = ReducedOverlapAOsParameters_Y(~, na,nb,la,lb,m,i,j)
+            C(1,1,1) =  8.0;
+            C(2,1,2) =  8.0;
+            C(2,2,1) =  4.0;
+            C(3,1,1) = -4.0;
+            C(3,1,3) = 12.0;
+            C(3,2,2) = 12.0;
+            C(3,3,1) =  4.0;
+            C(4,2,1) = -6.0;
+            C(4,2,3) = 30.0;
+            C(4,3,2) = 20.0;
+            C(4,4,1) =  5.0;
+            
+            valueY = 0;
+            if(0<na && 0<nb)
+                for u = 0:la-m
+                    for v = 0:lb-m
+                        if(0<abs(C(la+1,m+1,u+1)) && 0<abs(C(lb+1,m+1,v+1)))
+                            for a = 0:m
+                                for b = 0:m
+                                    for c = 0:u
+                                        for d = 0:v
+                                            for e = 0:na-m-u
+                                                for f = 0:nb-m-v
+                                                    if(i == 2*a+c+d+e+f && j == 2*b+c+d+na+nb-2*m-u-v-e-f)
+                                                        tempY = C(la+1,m+1,u+1)*C(lb+1,m+1,v+1);
+                                                        tempY = tempY .* power(-1.0, m-a+b+d+nb-m-v-f);
+                                                        tempY = tempY .* power(-1.0, v);
+                                                        tempY = tempY .* nchoosek(m, a);
+                                                        tempY = tempY .* nchoosek(m, b);
+                                                        tempY = tempY .* nchoosek(u, c);
+                                                        tempY = tempY .* nchoosek(v, d);
+                                                        tempY = tempY .* nchoosek(na-m-u, e);
+                                                        tempY = tempY .* nchoosek(nb-m-v, f);
+                                                        valueY = valueY + tempY;
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
         
     end

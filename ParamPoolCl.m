@@ -18,13 +18,18 @@ classdef (Sealed) ParamPoolCl < ParamPoolBase
             obj.imuAmuD = 0.977*Arguments.GetInstance().GetEV2AU();
             obj.effectiveNuclearChargeK = 16.70;
             obj.effectiveNuclearChargeL = 12.85;
-            if(Arguments.GetInstance().GetCurrentTheory() == EnumTheory.ZINDOS)
-                obj.effectiveNuclearChargeMsp = 2.130*3.0; % from orca 3.0.1
-                obj.effectiveNuclearChargeMd  = 0.0;       % not used
-            else
-                obj.effectiveNuclearChargeMsp = 6.10;
-                obj.effectiveNuclearChargeMd  = 6.10;
-            end
+            obj.effectiveNuclearChargeMsp = 6.10;
+            obj.effectiveNuclearChargeMd  = 6.10;
+            
+            obj.zindo_effectiveNuclearChargeMsp = 2.130*3.0;
+            obj.zindo_effectiveNuclearChargeMd  = 0.0;
+%             if(Arguments.GetInstance().GetCurrentTheory() == EnumTheory.ZINDOS)
+%                 obj.effectiveNuclearChargeMsp = 2.130*3.0; % from orca 3.0.1
+%                 obj.effectiveNuclearChargeMd  = 0.0;       % not used
+%             else
+%                 obj.effectiveNuclearChargeMsp = 6.10;
+%                 obj.effectiveNuclearChargeMd  = 6.10;
+%             end
             
             % ORCA parameter 3.0.1 set
             % see "ORCA 2.8"( http:%www.thch.uni-bonn.de/tc/orca/ ).

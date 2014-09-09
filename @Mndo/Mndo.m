@@ -214,7 +214,6 @@ classdef Mndo < ZindoS
                     && ( orbital1 == 4 || orbital1 == 2 || orbital1 == 3 )...
                     && ( orbital2 == 4 || orbital2 == 2 || orbital2 == 3 ) )
                 value = obj.AtomGetNddoHpp(atom);
-                
             else
                 throw(MException('Mndo:GetExchangeInt', 'Orbital type wrong.'));
             end

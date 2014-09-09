@@ -21,6 +21,9 @@ classdef (Sealed) ParamPoolC < ParamPoolBase
             obj.effectiveNuclearChargeMsp = 0.0;
             obj.effectiveNuclearChargeMd = 0.0;
             
+            obj.zindo_effectiveNuclearChargeMsp = 0.0;
+            obj.zindo_effectiveNuclearChargeMd = 0.0;
+            
             obj.indoG1 = 0.267708;
             obj.indoF2 = 0.17372;
             obj.indoF0CoefficientS = (obj.coreCharge - 0.5);

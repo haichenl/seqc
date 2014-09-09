@@ -7,60 +7,14 @@ classdef (Abstract) ParamPoolBase < handle
             if(length(cndo2params) ~= length(obj.cndo2ValidParams))
                 throw(MException('ParamPoolBase:SetCndo2Params', 'Wrong number of input parameters.'));
             end
-            iter = 1;
-            for i = obj.cndo2ValidParams
-                switch i
-                    case 1
-                        obj.bondingParameter = cndo2params(iter);
-                    case 2
-                        obj.imuAmuS = cndo2params(iter);
-                    case 3
-                        obj.imuAmuP = cndo2params(iter);
-                    case 4
-                        obj.imuAmuD = cndo2params(iter);
-                    case 5
-                        obj.effectiveNuclearChargeK = cndo2params(iter);
-                    case 6
-                        obj.effectiveNuclearChargeL = cndo2params(iter);
-                    case 7
-                        obj.effectiveNuclearChargeMsp = cndo2params(iter);
-                    case 8
-                        obj.effectiveNuclearChargeMd = cndo2params(iter);
-                    case 9
-                        obj.effectiveNuclearChargeNsp = cndo2params(iter);
-                    otherwise
-                        throw(MException('ParamPoolBase:SetCndo2Params', 'validParams wrong.'));
-                end
-                iter = iter + 1;
+            for i = 1:length(obj.cndo2ValidParams)
+                obj.SetCndo2kthParam(obj.cndo2ValidParams(i), cndo2params(i));
             end
         end
         function cndo2params = GetCndo2Params(obj)
             cndo2params = zeros(length(obj.cndo2ValidParams), 1);
-            iter = 1;
-            for i = obj.cndo2ValidParams
-                switch i
-                    case 1
-                        cndo2params(iter) = obj.bondingParameter;
-                    case 2
-                        cndo2params(iter) = obj.imuAmuS;
-                    case 3
-                        cndo2params(iter) = obj.imuAmuP;
-                    case 4
-                        cndo2params(iter) = obj.imuAmuD;
-                    case 5
-                        cndo2params(iter) = obj.effectiveNuclearChargeK;
-                    case 6
-                        cndo2params(iter) = obj.effectiveNuclearChargeL;
-                    case 7
-                        cndo2params(iter) = obj.effectiveNuclearChargeMsp;
-                    case 8
-                        cndo2params(iter) = obj.effectiveNuclearChargeMd;
-                    case 9
-                        cndo2params(iter) = obj.effectiveNuclearChargeNsp;
-                    otherwise
-                        throw(MException('ParamPoolBase:GetCndo2Params', 'validParams wrong.'));
-                end
-                iter = iter + 1;
+            for i = 1:length(obj.cndo2ValidParams)
+                cndo2params(i) = obj.GetCndo2kthParam(obj.cndo2ValidParams(i));
             end
         end
         
@@ -119,6 +73,59 @@ classdef (Abstract) ParamPoolBase < handle
         
     end
     
+    methods (Access = private)
+        
+        function SetCndo2kthParam(obj, k, param)
+            switch k
+                case 1
+                    obj.bondingParameter = param;
+                case 2
+                    obj.imuAmuS = param;
+                case 3
+                    obj.imuAmuP = param;
+                case 4
+                    obj.imuAmuD = param;
+                case 5
+                    obj.effectiveNuclearChargeK = param;
+                case 6
+                    obj.effectiveNuclearChargeL = param;
+                case 7
+                    obj.effectiveNuclearChargeMsp = param;
+                case 8
+                    obj.effectiveNuclearChargeMd = param;
+                case 9
+                    obj.effectiveNuclearChargeNsp = param;
+                otherwise
+                    throw(MException('ParamPoolBase:SetCndo2kthParam', 'validParams wrong.'));
+            end
+        end
+        function param = GetCndo2kthParam(obj, k)
+            switch k
+                case 1
+                    param = obj.bondingParameter;
+                case 2
+                    param = obj.imuAmuS;
+                case 3
+                    param = obj.imuAmuP;
+                case 4
+                    param = obj.imuAmuD;
+                case 5
+                    param = obj.effectiveNuclearChargeK;
+                case 6
+                    param = obj.effectiveNuclearChargeL;
+                case 7
+                    param = obj.effectiveNuclearChargeMsp;
+                case 8
+                    param = obj.effectiveNuclearChargeMd;
+                case 9
+                    param = obj.effectiveNuclearChargeNsp;
+                otherwise
+                    throw(MException('ParamPoolBase:GetCndo2kthParam', 'validParams wrong.'));
+            end
+        end
+        
+    end
+    
     properties (SetAccess = protected)
         
         % zindo uses this
@@ -136,6 +143,7 @@ classdef (Abstract) ParamPoolBase < handle
         effectiveNuclearChargeMd;
         effectiveNuclearChargeNsp;
         
+        % indo
         indoF2;
         indoG1;
         indoF0CoefficientS;
@@ -145,6 +153,9 @@ classdef (Abstract) ParamPoolBase < handle
         indoF2CoefficientS;
         indoF2CoefficientP;
         
+        % zindo/s
+        zindo_effectiveNuclearChargeMsp;
+        zindo_effectiveNuclearChargeMd;
         zindoBondingParameterS;
         zindoBondingParameterD;
         zindoF0ss;
@@ -165,6 +176,7 @@ classdef (Abstract) ParamPoolBase < handle
         zindoIonPotP;
         zindoIonPotD;
         
+        % mndo
         mndoCoreintegralS;
         mndoCoreintegralP;
         mndoOrbitalExponentS;
@@ -182,6 +194,7 @@ classdef (Abstract) ParamPoolBase < handle
         mndoGpp2;
         mndoHsp;
         
+        % am1
         am1CoreintegralS;
         am1CoreintegralP;
         am1OrbitalExponentS;
@@ -199,12 +212,15 @@ classdef (Abstract) ParamPoolBase < handle
         am1ParameterK = zeros(4, 1);
         am1ParameterL = zeros(4, 1);
         am1ParameterM = zeros(4, 1);
+        
+        % am1d
         am1DCoreintegralS;
         am1DCoreintegralP;
         am1DBondingParameterS;
         am1DBondingParameterP;
         am1DAlpha;
         
+        % pm3
         pm3CoreintegralS;
         pm3CoreintegralP;
         pm3OrbitalExponentS;
@@ -236,6 +252,8 @@ classdef (Abstract) ParamPoolBase < handle
         pm3PddgParameterM = zeros(4, 1);
         pm3PddgParameterPa = zeros(2, 1);
         pm3PddgParameterDa = zeros(2, 1);
+        
+        % pm3d
         pm3DCoreintegralS;
         pm3DCoreintegralP;
         pm3DBondingParameterS;

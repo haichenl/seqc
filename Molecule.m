@@ -154,6 +154,7 @@ classdef Molecule < handle
         end
         
         function CalcDistanceAtoms(obj)
+            obj.distanceAtoms = zeros(length(obj.atomVect));
             for a = 1:length(obj.atomVect)
                 atomA = obj.atomVect{a};
                 for b = a:length(obj.atomVect)
@@ -165,6 +166,7 @@ classdef Molecule < handle
         end
         
         function CalcDistanceEpcs(obj)
+            obj.distanceEpcs = zeros(length(obj.epcVect));
             for a = 1:length(obj.epcVect)
                 epcA = obj.epcVect{a};
                 for b = a:length(obj.epcVect)
@@ -176,6 +178,7 @@ classdef Molecule < handle
         end
         
         function CalcDistanceAtomsEpcs(obj)
+            obj.distanceAtomsEpcs = zeros(length(obj.atomVect), length(obj.epcVect));
             for a = 1:length(obj.atomVect)
                 atom = obj.atomVect{a};
                 for b = 1:length(obj.epcVect)

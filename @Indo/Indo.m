@@ -3,6 +3,8 @@ classdef Indo < Cndo2
     methods (Access = public)
         
         function obj = Indo()
+            obj.theory = EnumTheory.INDO;
+            obj.SetEnableAtomTypes();
         end
         
     end
