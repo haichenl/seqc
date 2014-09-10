@@ -37,7 +37,7 @@ classdef (Abstract) ParamPoolManagerBase < handle
         
         function SetAllParams(obj, allParams)
             for i = 1:length(obj.paramPoolsVec)
-                obj.paramPoolsVec{i}.SetCndo2Params(allParams(obj.paramStartIndices(i):obj.paramEndIndices(i)));
+                obj.SetIthPoolParams(i, allParams(obj.paramStartIndices(i):obj.paramEndIndices(i)));
             end
         end
         

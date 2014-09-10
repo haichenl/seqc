@@ -108,7 +108,7 @@ classdef Cndo2 < handle
             if(uint8(obj.theory) == uint8(EnumTheory.CNDO2))
                 for i = 1:length(mol.atomVect)
                     atom = mol.atomVect{i};
-                    if(atom.atomType == EnumAtom.Cl)
+                    if(atom.atomType == uint8(EnumAtom.Cl) || atom.atomType == uint8(EnumAtom.S))
                         atom.Set_d_orbitals();
                     end
                 end
@@ -147,11 +147,11 @@ classdef Cndo2 < handle
             end
             
             % calculate electron integral
-            if(uint8(obj.theory) == uint8(EnumTheory.CNDO2) || uint8(obj.theory) == uint8(EnumTheory.INDO))
-                obj.gammaAB = obj.CalcGammaAB();
-            end
+            % if(uint8(obj.theory) == uint8(EnumTheory.CNDO2) || uint8(obj.theory) == uint8(EnumTheory.INDO))
+            obj.gammaAB = obj.CalcGammaAB();
+            % end
             obj.overlapAOs = obj.CalcOverlapAOs();
-            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
+%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
             obj.CalcTwoElecsTwoCores();
             obj.h1Matrix = obj.CalcH1Matrix();
             
@@ -174,7 +174,7 @@ classdef Cndo2 < handle
                 obj.orbitalElectronPopulation = 2 .* orbital(:, 1:numberTotalValenceElectrons/2) ...
                     *orbital(:, 1:numberTotalValenceElectrons/2)';
                 
-                disp(['iter', num2str(iterationStep)]);
+%                 disp(['iter', num2str(iterationStep)]);
                 
                 % check convergence
                 hasConverged = obj.SatisfyConvergenceCriterion(oldOrbitalElectronPopulation, ...

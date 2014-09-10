@@ -13,6 +13,8 @@ classdef AtomFactory < handle
                 atom = AtomO(index);
             elseif(atomType == EnumAtom.F)
                 atom = AtomF(index);
+            elseif(atomType == EnumAtom.S)
+                atom = AtomS(index);
             elseif(atomType == EnumAtom.Cl)
                 atom = AtomCl(index);
             else

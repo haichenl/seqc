@@ -2,12 +2,13 @@ classdef ParamPoolManagerFactory < handle
     
     methods (Static)
         
-        function paramPoolManager = Create()
-            TheoryType = Arguments.GetInstance().currentTheory;
-            if(TheoryType == EnumTheory.CNDO2)
+        function paramPoolManager = GetManagerInstance(theoryType)
+            if(theoryType == EnumTheory.CNDO2)
                 paramPoolManager = ParamPoolManagerCndo2.GetInstance();
+            elseif(theoryType == EnumTheory.INDO)
+                paramPoolManager = ParamPoolManagerIndo.GetInstance();
             else
-                throw(MException('AtomFactory:Create', 'Atom type not implemented yet.'));
+                throw(MException('ParamPoolManagerFactory:GetManagerInstance', 'Theory type not implemented yet.'));
             end
         end
         

@@ -1,8 +1,8 @@
-classdef ModelCndo2 < handle % wrapper of cndo2
+classdef ModelSeqc < handle % wrapper of seqc
     
     properties
         
-        cndo2;
+        seqc;
         
         % the below 2's are for computing homo/lumo
         nelec;
@@ -21,7 +21,7 @@ classdef ModelCndo2 < handle % wrapper of cndo2
     
     methods
         
-        function obj = ModelCndo2(zmat_in)
+        function obj = ModelSeqc(zmat_in, class, paramManager)
             obj.frag.config.zmat = zmat_in;
             mol = Molecule();
             cart = zmat_in.GauCart();
@@ -30,29 +30,29 @@ classdef ModelCndo2 < handle % wrapper of cndo2
                 mol.AddAtom(AtomFactory.Create(EnumAtom(zmat_in.atoms{atomi}.z), atomi, xyz));
             end
             mol.CalcBasics();
-            mol.AddParamPoolsIntoManager(ParamPoolManagerCndo2.GetInstance());
+            mol.AddParamPoolsIntoManager(paramManager);
             
-            obj.cndo2 = Cndo2();
-            obj.cndo2.SetMolecule(mol);
+            obj.seqc = class();
+            obj.seqc.SetMolecule(mol);
             
             obj.nelec = mol.totalNumberValenceElectrons;
         end
         
         function solveHF(obj, ~, ~, ~, ~)
-            obj.cndo2.DoSCF();
-            obj.Eorb = obj.cndo2.energiesMO;
+            obj.seqc.DoSCF();
+            obj.Eorb = obj.seqc.energiesMO;
         end
         
         function res = Etot(obj, ~)
-            res = obj.cndo2.elecSCFEnergy;
+            res = obj.seqc.elecSCFEnergy;
         end
         
         function res = E1(obj, ~)
-            res = sum(sum(obj.cndo2.h1Matrix.*obj.cndo2.orbitalElectronPopulation));
+            res = sum(sum(obj.seqc.h1Matrix.*obj.seqc.orbitalElectronPopulation));
         end
         
         function res = density(obj, ~)
-            res = obj.cndo2.orbitalElectronPopulation;
+            res = obj.seqc.orbitalElectronPopulation;
         end
         
         % fake methods

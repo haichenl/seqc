@@ -18,6 +18,22 @@ classdef (Abstract) ParamPoolBase < handle
             end
         end
         
+        % indo
+        function SetIndoParams(obj, indoparams)
+            if(length(indoparams) ~= length(obj.indoValidParams))
+                throw(MException('ParamPoolBase:SetIndoParams', 'Wrong number of input parameters.'));
+            end
+            for i = 1:length(obj.indoValidParams)
+                obj.SetIndokthParam(obj.indoValidParams(i), indoparams(i));
+            end
+        end
+        function indoparams = GetIndoParams(obj)
+            indoparams = zeros(length(obj.indoValidParams), 1);
+            for i = 1:length(obj.indoValidParams)
+                indoparams(i) = obj.GetIndokthParam(obj.indoValidParams(i));
+            end
+        end
+        
         % zindos
         function res = GetZindoJss(obj)
             res = obj.zindoF0ss;
@@ -124,6 +140,63 @@ classdef (Abstract) ParamPoolBase < handle
             end
         end
         
+        function SetIndokthParam(obj, k, param)
+            switch k
+                case 1
+                    obj.bondingParameter = param;
+                case 2
+                    obj.imuAmuS = param;
+                case 3
+                    obj.imuAmuP = param;
+                case 4
+                    obj.imuAmuD = param;
+                case 5
+                    obj.effectiveNuclearChargeK = param;
+                case 6
+                    obj.effectiveNuclearChargeL = param;
+                case 7
+                    obj.effectiveNuclearChargeMsp = param;
+                case 8
+                    obj.effectiveNuclearChargeMd = param;
+                case 9
+                    obj.effectiveNuclearChargeNsp = param;
+                case 10
+                    obj.indoG1 = param;
+                case 11
+                    obj.indoF2 = param;
+                otherwise
+                    throw(MException('ParamPoolBase:SetIndo2kthParam', 'validParams wrong.'));
+            end
+        end
+        function param = GetIndokthParam(obj, k)
+            switch k
+                case 1
+                    param = obj.bondingParameter;
+                case 2
+                    param = obj.imuAmuS;
+                case 3
+                    param = obj.imuAmuP;
+                case 4
+                    param = obj.imuAmuD;
+                case 5
+                    param = obj.effectiveNuclearChargeK;
+                case 6
+                    param = obj.effectiveNuclearChargeL;
+                case 7
+                    param = obj.effectiveNuclearChargeMsp;
+                case 8
+                    param = obj.effectiveNuclearChargeMd;
+                case 9
+                    param = obj.effectiveNuclearChargeNsp;
+                case 10
+                    param = obj.indoG1;
+                case 11
+                    param = obj.indoF2;
+                otherwise
+                    throw(MException('ParamPoolBase:GetIndokthParam', 'validParams wrong.'));
+            end
+        end
+        
     end
     
     properties (SetAccess = protected)
@@ -144,6 +217,7 @@ classdef (Abstract) ParamPoolBase < handle
         effectiveNuclearChargeNsp;
         
         % indo
+        indoValidParams;
         indoF2;
         indoG1;
         indoF0CoefficientS;
@@ -238,6 +312,8 @@ classdef (Abstract) ParamPoolBase < handle
         pm3Gsp;
         pm3Gpp2;
         pm3Hsp;
+        
+        % pm3pddg
         pm3PddgCoreintegralS;
         pm3PddgCoreintegralP;
         pm3PddgOrbitalExponentS;

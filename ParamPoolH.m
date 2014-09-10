@@ -20,10 +20,10 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.effectiveNuclearChargeL = 0.0;
             obj.effectiveNuclearChargeMsp = 0.0;
             obj.effectiveNuclearChargeMd = 0.0;
+            obj.effectiveNuclearChargeNsp = 0.0;
             
-            obj.zindo_effectiveNuclearChargeMsp = 0.0;
-            obj.zindo_effectiveNuclearChargeMd = 0.0;
-            
+            % indo
+            obj.indoValidParams = [1,2,5];
             obj.indoG1 = 0.0;
             obj.indoF2 = 0.0;
             obj.indoF0CoefficientS = 0.5;
@@ -32,6 +32,10 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.indoG1CoefficientP = 0.0;
             obj.indoF2CoefficientS = 0.0;
             obj.indoF2CoefficientP = 0.0;
+            
+            % zindo/s
+            obj.zindo_effectiveNuclearChargeMsp = 0.0;
+            obj.zindo_effectiveNuclearChargeMd = 0.0;
             obj.zindoBondingParameterS = -12.0*Arguments.GetInstance().GetEV2AU();
             obj.zindoBondingParameterD = 0.0;
             obj.zindoF0ss = 12.85 * Arguments.GetInstance().GetEV2AU();
@@ -51,6 +55,8 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.zindoIonPotS = 13.06 * Arguments.GetInstance().GetEV2AU();
             obj.zindoIonPotP = 0.0 * Arguments.GetInstance().GetEV2AU();
             obj.zindoIonPotD = 0.0 * Arguments.GetInstance().GetEV2AU();
+            
+            % mndo
             obj.mndoCoreintegralS = -11.906276 * Arguments.GetInstance().GetEV2AU();
             obj.mndoCoreintegralP = 0.0;
             obj.mndoOrbitalExponentS = 1.331967;
@@ -71,6 +77,8 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.mndoDerivedParameterRho(1) = 0.5/0.4721515374;
             obj.mndoDerivedParameterRho(2) = 0.0;
             obj.mndoDerivedParameterRho(3) = 0.0;
+            
+            % am1
             obj.am1CoreintegralS = -11.396427 * Arguments.GetInstance().GetEV2AU();
             obj.am1CoreintegralP = 0.0;
             obj.am1OrbitalExponentS = 1.188078;
@@ -101,11 +109,15 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.am1ParameterM(2) = 1.80 * Arguments.GetInstance().GetAngstrom2AU();
             obj.am1ParameterM(3) = 2.10 * Arguments.GetInstance().GetAngstrom2AU();
             obj.am1ParameterM(4) = 0.00 * Arguments.GetInstance().GetAngstrom2AU();
+            
+            % am1d
             obj.am1DCoreintegralS = -11.223791 * Arguments.GetInstance().GetEV2AU();
             obj.am1DCoreintegralP = 0.0 * Arguments.GetInstance().GetEV2AU();
             obj.am1DBondingParameterS = -6.376265 * Arguments.GetInstance().GetEV2AU();
             obj.am1DBondingParameterP = 0.0 * Arguments.GetInstance().GetEV2AU();
             obj.am1DAlpha = 3.577756 / Arguments.GetInstance().GetAngstrom2AU();
+            
+            % pm3
             obj.pm3CoreintegralS = -13.073321 * Arguments.GetInstance().GetEV2AU();
             obj.pm3CoreintegralP = 0.0;
             obj.pm3OrbitalExponentS = 0.967807;
@@ -136,6 +148,8 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.pm3Gsp = 0.0;
             obj.pm3Gpp2 = 0.0;
             obj.pm3Hsp = 0.0;
+            
+            % pm3pddg
             obj.pm3PddgCoreintegralS = -12.893272 * Arguments.GetInstance().GetEV2AU();
             obj.pm3PddgCoreintegralP = 0.0;
             obj.pm3PddgOrbitalExponentS = 0.972786;
@@ -165,6 +179,8 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.pm3PddgParameterPa(2) =-0.034823 * Arguments.GetInstance().GetEV2AU();
             obj.pm3PddgParameterDa(1) = 0.663395 * Arguments.GetInstance().GetAngstrom2AU();
             obj.pm3PddgParameterDa(2) = 1.081901 * Arguments.GetInstance().GetAngstrom2AU();
+            
+            % pm3d
             obj.pm3DCoreintegralS = -13.054076 * Arguments.GetInstance().GetEV2AU();
             obj.pm3DCoreintegralP = 0.0 * Arguments.GetInstance().GetEV2AU();
             obj.pm3DBondingParameterS = -5.628901 * Arguments.GetInstance().GetEV2AU();

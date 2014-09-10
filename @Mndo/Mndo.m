@@ -1,4 +1,4 @@
-classdef Mndo < ZindoS
+classdef Mndo < Indo
     
     properties (SetAccess = private)
         
@@ -36,6 +36,10 @@ classdef Mndo < ZindoS
             obj.enableAtomTypes{end+1} = EnumAtom.S;
             obj.enableAtomTypes{end+1} = EnumAtom.Cl;
             obj.enableAtomTypes{end+1} = EnumAtom.Zn;
+        end
+        
+        function gammaAB = CalcGammaAB(~)
+            gammaAB = [];
         end
         
         %    virtual void CalcSCFProperties();
