@@ -57,6 +57,7 @@ classdef (Sealed) ParamPoolCl < ParamPoolBase
             obj.zindoIonPotD =  6.00 * Arguments.GetInstance().GetEV2AU();
             
             % mndo
+            obj.mndoValidParams = [1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18];
             obj.mndoCoreintegralS = -100.227166 * Arguments.GetInstance().GetEV2AU();
             obj.mndoCoreintegralP = -77.378667 * Arguments.GetInstance().GetEV2AU();
             obj.mndoOrbitalExponentS = 3.784645;
@@ -79,6 +80,8 @@ classdef (Sealed) ParamPoolCl < ParamPoolBase
             obj.mndoDerivedParameterRho(3) = 0.5/0.6053315152;
             
             % am1
+            obj.am1ValidParams = [1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,...
+                19,20,21,22,23,24,25,26,27,28,29,30];
             obj.am1CoreintegralS = -111.613948 * Arguments.GetInstance().GetEV2AU();
             obj.am1CoreintegralP =  -76.640107 * Arguments.GetInstance().GetEV2AU();
             obj.am1OrbitalExponentS = 3.631376;
