@@ -120,7 +120,7 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.am1DAlpha = 3.577756 / Arguments.GetInstance().GetAngstrom2AU();
             
             % pm3
-            obj.pm3ValidParams = [1,3,5,7,8,16,19,20,21,23,24,25,27,28,29];
+            obj.pm3ValidParams = [1,3,5,7,8,16,19,20,21,22,23,24,27,28];
             obj.pm3CoreintegralS = -13.073321 * Arguments.GetInstance().GetEV2AU();
             obj.pm3CoreintegralP = 0.0;
             obj.pm3OrbitalExponentS = 0.967807;

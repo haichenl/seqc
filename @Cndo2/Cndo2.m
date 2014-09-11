@@ -209,6 +209,7 @@ classdef Cndo2 < handle
                 if(iterationStep==maxIterationsSCF-1)
 %                     throw(MException('Cndo2:DoSCF', 'SCF not converged.'));
                     disp('SCF not converged.');
+                    obj.elecSCFEnergy = 0;
                 end
             end
         end
