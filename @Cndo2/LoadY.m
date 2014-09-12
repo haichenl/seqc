@@ -1,3 +1,4 @@
+function LoadY(obj)
 yvec = [ ...
 	0.000000, ...
 	0.000000, ...
@@ -129603,22 +129604,26 @@ yvec = [ ...
 
 EnumShell_end = uint8(EnumShell.EnumShell_end);
 
-Y = zeros(EnumShell_end, EnumShell_end, EnumShell_end-1, EnumShell_end-1, EnumShell_end-1, 2*(EnumShell_end-1)+1, 2*(EnumShell_end-1)+1);
+obj.ReducedOverlapAOsParameters_Y = permute(reshape(yvec, 2*(EnumShell_end-1)+1, 2*(EnumShell_end-1)+1, EnumShell_end-1, EnumShell_end-1, EnumShell_end-1, EnumShell_end, EnumShell_end), [7 6 5 4 3 2 1]);
 
-iter = 1;
-for a = 1:EnumShell_end
-    for b = 1:EnumShell_end
-        for c = 1:EnumShell_end-1
-            for d = 1:EnumShell_end-1
-                for e = 1:EnumShell_end-1
-                    for f = 1:2*(EnumShell_end-1)+1
-                        for g = 1:2*(EnumShell_end-1)+1
-                            Y(a,b,c,d,e,f,g) = yvec(iter);
-                            iter = iter + 1;
-                        end
-                    end
-                end
-            end
-        end
-    end
+%~ obj.ReducedOverlapAOsParameters_Y = zeros(EnumShell_end, EnumShell_end, EnumShell_end-1, EnumShell_end-1, EnumShell_end-1, 2*(EnumShell_end-1)+1, 2*(EnumShell_end-1)+1);
+%~ 
+%~ iter = 1;
+%~ for a = 1:EnumShell_end
+    %~ for b = 1:EnumShell_end
+        %~ for c = 1:EnumShell_end-1
+            %~ for d = 1:EnumShell_end-1
+                %~ for e = 1:EnumShell_end-1
+                    %~ for f = 1:2*(EnumShell_end-1)+1
+                        %~ for g = 1:2*(EnumShell_end-1)+1
+                            %~ obj.ReducedOverlapAOsParameters_Y(a,b,c,d,e,f,g) = yvec(iter);
+                            %~ iter = iter + 1;
+                        %~ end
+                    %~ end
+                %~ end
+            %~ end
+        %~ end
+    %~ end
+%~ end
+
 end

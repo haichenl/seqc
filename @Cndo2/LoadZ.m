@@ -1,3 +1,4 @@
+function LoadZ(obj)
 zvec = [ ...
 	1.000000, ...
 	0.000000, ...
@@ -963,15 +964,18 @@ zvec = [ ...
 
 
 EnumShell_end = uint8(EnumShell.EnumShell_end);
+obj.ReducedOverlapAOsParameters_Z = permute(reshape(zvec, 4*(EnumShell_end-1)-1, 2*(EnumShell_end-1), 2*(EnumShell_end-1) ), [3 2 1]);
 
-Z = zeros(2*(EnumShell_end-1), 2*(EnumShell_end-1), 4*(EnumShell_end-1)-1);
+%~ obj.ReducedOverlapAOsParameters_Z = zeros(2*(EnumShell_end-1), 2*(EnumShell_end-1), 4*(EnumShell_end-1)-1);
+%~ 
+%~ iter = 1;
+%~ for a = 1:2*(EnumShell_end-1)
+    %~ for b = 1:2*(EnumShell_end-1)
+        %~ for c = 1:4*(EnumShell_end-1)-1
+            %~ obj.ReducedOverlapAOsParameters_Z(a,b,c) = zvec(iter);
+            %~ iter = iter + 1;
+        %~ end
+    %~ end
+%~ end
 
-iter = 1;
-for a = 1:2*(EnumShell_end-1)
-    for b = 1:2*(EnumShell_end-1)
-        for c = 1:4*(EnumShell_end-1)-1
-            Z(a,b,c) = zvec(iter);
-            iter = iter + 1;
-        end
-    end
 end

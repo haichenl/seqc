@@ -80,7 +80,7 @@ classdef (Sealed) ParamPoolH < ParamPoolBase
             obj.mndoDerivedParameterRho(3) = 0.0;
             
             % am1
-            obj.am1ValidParams = [1,3,5,7,8,16,19,20,21,23,24,25,27,28,29];
+            obj.am1ValidParams = [1,3,5,7,8,16,19,20,21,22,23,24,25,27,28,29];
             obj.am1CoreintegralS = -11.396427 * Arguments.GetInstance().GetEV2AU();
             obj.am1CoreintegralP = 0.0;
             obj.am1OrbitalExponentS = 1.188078;

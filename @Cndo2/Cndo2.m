@@ -39,6 +39,17 @@ classdef Cndo2 < handle
         excitedEnergies;
         freeExcitonEnergiesCIS;
         matrixForce;
+        
+        natom;
+        nbf;
+        mapBasis2Atom;
+        mapBasis2AngularType;
+        gammaij;
+        coreChargeVecAtom;
+        coreChargeVecBasis;
+        imuAmuVecBasis;
+        bondParamMatAtom;
+        bondParamKMat;
 
     end
     
@@ -49,8 +60,8 @@ classdef Cndo2 < handle
         gammaAB;
         enableAtomTypesVdW = {};
         
-%         ReducedOverlapAOsParameters_Z;
-%         ReducedOverlapAOsParameters_Y;
+        ReducedOverlapAOsParameters_Z;
+        ReducedOverlapAOsParameters_Y;
    
     end
     
@@ -99,7 +110,9 @@ classdef Cndo2 < handle
 %             ycontainer = load('cndo2_y.mat', 'Y');
 %             obj.ReducedOverlapAOsParameters_Z = zcontainer.Z;
 %             obj.ReducedOverlapAOsParameters_Y = ycontainer.Y;
-
+            obj.LoadZ();
+            obj.LoadY();
+            
         end
         
         function SetMolecule(obj, mol)
@@ -119,19 +132,59 @@ classdef Cndo2 < handle
             obj.CheckNumberValenceElectrons();
             obj.CheckEnableAtomType();
             obj.CheckEnableAtomTypeVdW();
-            nbf = obj.molecule.totalNumberAOs;
-            obj.fockMatrix = zeros(nbf);
-            obj.energiesMO = zeros(nbf, 1);
-            obj.orbitalElectronPopulation = zeros(nbf);
+            obj.nbf = obj.molecule.totalNumberAOs;
+            obj.fockMatrix = zeros(obj.nbf);
+            obj.energiesMO = zeros(obj.nbf, 1);
+            obj.orbitalElectronPopulation = zeros(obj.nbf);
             obj.atomicElectronPopulation = zeros(length(obj.molecule.atomVect), 1);
-            obj.overlapAOs = zeros(nbf);
-            obj.cartesianMatrix = zeros(nbf, nbf, 3);
+            obj.overlapAOs = zeros(obj.nbf);
+            obj.cartesianMatrix = zeros(obj.nbf, obj.nbf, 3);
             electronicTransitionDipoleMomentsDim = 1;
 %             if(Parameters::GetInstance()->RequiresCIS()){
 %                 electronicTransitionDipoleMomentsDim += Parameters::GetInstance()->GetNumberExcitedStatesCIS();
 %                 }
             obj.electronicTransitionDipoleMoments = zeros(electronicTransitionDipoleMomentsDim);
             obj.coreDipoleMoment = zeros(3, 1);
+            
+            % for vectorization
+            obj.natom = length(obj.molecule.atomVect);
+            obj.coreChargeVecAtom = zeros(obj.natom, 1);
+            obj.mapBasis2Atom = zeros(obj.nbf,1);
+            valenceShellTypeVecAtom = zeros(obj.natom, 1);
+            for i = 1:obj.natom
+                atom = obj.molecule.atomVect{i};
+                ind = atom.GetFirstAOIndex():atom.GetLastAOIndex();
+                obj.mapBasis2Atom(ind) = i;
+                obj.coreChargeVecAtom(i) = atom.coreCharge;
+                valenceShellTypeVecAtom(i) = atom.valenceShellType;
+            end
+            obj.coreChargeVecBasis = obj.coreChargeVecAtom(obj.mapBasis2Atom);
+            
+            tempK = double(valenceShellTypeVecAtom<3);
+            tempK = tempK*tempK';
+            tempK = ~tempK;
+            tempK = tempK .* (-0.25);
+            obj.bondParamKMat = tempK + 1;
+            
+            obj.mapBasis2AngularType = zeros(obj.nbf,1);
+            for i = 1:obj.nbf
+                atom = obj.molecule.atomVect{obj.mapBasis2Atom(i)};
+                orbital = atom.valence(i-atom.firstAOIndex+1);
+                if(orbital == 1) % s
+                    obj.mapBasis2AngularType(i) = 1;
+                elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
+                    obj.mapBasis2AngularType(i) = 2;
+                elseif(orbital == 5 || ...
+                        orbital == 6 || ...
+                        orbital == 7 || ...
+                        orbital == 8 || ...
+                        orbital == 9 ) % dxy dyz dzz dzx dxxyy
+                    obj.mapBasis2AngularType(i) = 3;
+                else
+                    throw(MException('Cndo2:SetMolecule', 'Orbital type wrong.'));
+                end
+            end
+            
         end
         
         function DoSCF(obj)
@@ -151,6 +204,7 @@ classdef Cndo2 < handle
             obj.gammaAB = obj.CalcGammaAB();
             % end
             obj.overlapAOs = obj.CalcOverlapAOs();
+            obj.Preiterations();
 %             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
             obj.CalcTwoElecsTwoCores();
             obj.h1Matrix = obj.CalcH1Matrix();
@@ -238,7 +292,7 @@ classdef Cndo2 < handle
         
     end
     
-    methods (Access = protected)
+    methods %(Access = protected)
         
         function SetEnableAtomTypes(obj)
             obj.enableAtomTypes = {};
@@ -257,6 +311,34 @@ classdef Cndo2 < handle
             %obj.enableAtomTypes{end+1} = EnumAtom.P;
             obj.enableAtomTypes{end+1} = EnumAtom.S;
             obj.enableAtomTypes{end+1} = EnumAtom.Cl;
+        end
+        
+        % generate protected vectorization stuffs
+        function Preiterations(obj)
+            bondParamVecAtom = zeros(obj.natom, 1);
+            for i = 1:obj.natom
+                bondParamVecAtom(i) = obj.AtomGetBondingParameter(obj.molecule.atomVect{i});
+            end
+            obj.bondParamMatAtom = bondParamVecAtom(:,ones(1,obj.natom));
+            obj.bondParamMatAtom = obj.bondParamMatAtom + obj.bondParamMatAtom';
+            obj.imuAmuVecBasis = zeros(obj.nbf,1);
+            for i = 1:obj.nbf
+                atom = obj.molecule.atomVect{obj.mapBasis2Atom(i)};
+                orbital = atom.valence(i-atom.firstAOIndex+1);
+                if(orbital == 1) % s
+                    obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuS;
+                elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
+                    obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuP;
+                elseif(orbital == 5 || ...
+                        orbital == 6 || ...
+                        orbital == 7 || ...
+                        orbital == 8 || ...
+                        orbital == 9 ) % dxy dyz dzz dzx dxxyy
+                    obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuD;
+                else
+                    throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
+                end
+            end
         end
         
         function CalcSCFProperties(obj)
@@ -412,7 +494,7 @@ classdef Cndo2 < handle
                 J = 9;
                 for i = 0:I-1
                     for j = 0:J-1
-                        temp = obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j);
+                        temp = obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1);
                         if(0<abs(temp))
                             temp = temp .* obj.GetAuxiliaryA(i, 0.5*(alpha+beta));
                             temp = temp .* obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
@@ -428,7 +510,7 @@ classdef Cndo2 < handle
                 beta = arg4;
                 value = 0.0;
                 for k = 0:na+nb
-                    temp = obj.ReducedOverlapAOsParameters_Z(na,nb,k);
+                    temp = obj.ReducedOverlapAOsParameters_Z(na+1,nb+1,k+1);
                     if(0<abs(temp))
                         temp = temp .* obj.GetAuxiliaryA(k, 0.5*(alpha+beta));
                         temp = temp .* obj.GetAuxiliaryB(na+nb-k, 0.5*(alpha-beta));
@@ -451,12 +533,12 @@ classdef Cndo2 < handle
             
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
+                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 + temp2);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 + temp2);
                     end
                 end
             end
@@ -471,12 +553,12 @@ classdef Cndo2 < handle
             J = 9;
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
+                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 - temp2);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 - temp2);
                     end
                 end
             end
@@ -491,14 +573,14 @@ classdef Cndo2 < handle
             J = 9;
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<fabs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
+                    if(0e0<fabs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA2ndDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB2ndDerivative(j, 0.5*(alpha-beta));
                         temp3 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 + temp2 + 2.0*temp3);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 + temp2 + 2.0*temp3);
                     end
                 end
             end
@@ -513,14 +595,14 @@ classdef Cndo2 < handle
             J = 9;
             for i = 0:I-1
                 for j = 0:J-1
-                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)))
+                    if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA2ndDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
                         temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB2ndDerivative(j, 0.5*(alpha-beta));
                         temp3 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
-                        value = value + obj.ReducedOverlapAOsParameters_Y(na,nb,la,lb,m,i,j)*(temp1 + temp2 - 2.0*temp3);
+                        value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 + temp2 - 2.0*temp3);
                     end
                 end
             end
@@ -689,6 +771,9 @@ classdef Cndo2 < handle
                 end
             end
             gammaAB = gammaAB + gammaAB' - diag(diag(gammaAB));
+            
+            % vectorize
+            obj.gammaij = gammaAB(obj.mapBasis2Atom, obj.mapBasis2Atom);
         end
         
         function value = GetFockDiagElement(obj, atomA, mu, isGuess)
@@ -700,7 +785,7 @@ classdef Cndo2 < handle
             if(~isGuess)
                 atomvect = obj.molecule.atomVect;
                 temp = obj.atomicElectronPopulation(indexAtomA) ...
-                    -0.5*diag(obj.orbitalElectronPopulation(mu, mu));
+                    -0.5*obj.orbitalElectronPopulation(mu, mu);
                 value = value + temp*obj.gammaAB(indexAtomA, indexAtomA);
                 
                 temp = 0.0;
@@ -722,6 +807,38 @@ classdef Cndo2 < handle
             if(~isGuess)
                 value = value - 0.5*obj.orbitalElectronPopulation(mu, nu)*obj.gammaAB(atomA.index, atomB.index);
             end
+        end
+        
+        % fully vectorized version
+        function fockdiag = GetFockDiag(obj, isGuess)
+            gammaijdiag = diag(obj.gammaij);
+            fockdiag = - obj.imuAmuVecBasis;
+            if(~isGuess)
+                fockdiag = fockdiag - (obj.coreChargeVecBasis - 0.5) .* gammaijdiag;
+                temp = obj.atomicElectronPopulation(obj.mapBasis2Atom) - 0.5 .* diag(obj.orbitalElectronPopulation);
+                fockdiag = fockdiag + temp .* gammaijdiag;
+                
+                diagZeroGammaAB = obj.gammaAB - diag(diag(obj.gammaAB));
+                
+                temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
+                temp = temp(:,ones(1,obj.natom));
+                temp = sum(temp .* diagZeroGammaAB, 1)';
+                fockdiag = fockdiag + temp(obj.mapBasis2Atom);
+            end
+        end
+        
+        function fockoffdiag = GetFockOffDiag(obj, isGuess)
+            
+            
+            fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            fockoffdiag = fockoffdiag .* obj.overlapAOs;
+            
+            if(~isGuess)
+                fockoffdiag = fockoffdiag - 0.5 .* obj.orbitalElectronPopulation .* obj.gammaij;
+            end
+            fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
+            
         end
         
         %    void TransposeFockMatrixMatrix(double** transposedFockMatrix) const;
@@ -1325,117 +1442,117 @@ classdef Cndo2 < handle
             end
         end
         
-%         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
-%             if(orbital == 1) % s
-%                 res = -1.0*atom.imuAmuS;
-%             elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
-%                 res = -1.0*atom.imuAmuP;
-%             elseif(orbital == 5 || ...
-%                     orbital == 6 || ...
-%                     orbital == 7 || ...
-%                     orbital == 8 || ...
-%                     orbital == 9 ) % dxy dyz dzz dzx dxxyy
-%                 res = -1.0*atom.imuAmuD;
-%             else
-%                 throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
-%             end
-%             if(~isGuess)
-%                 res = res - (atom.coreCharge - 0.5)*gamma;
-%             end
-%         end
-        
-        % vectorized version of the above function
         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
-            res = zeros(length(orbital), 1);
-            for i = 1:length(orbital)
-                if(orbital(i) == 1) % s
-                    res(i) = -1.0*atom.paramPool.imuAmuS;
-                elseif(orbital(i) == 4 || orbital(i) == 2 || orbital(i) == 3) % py pz px
-                    res(i) = -1.0*atom.paramPool.imuAmuP;
-                elseif(orbital(i) == 5 || ...
-                        orbital(i) == 6 || ...
-                        orbital(i) == 7 || ...
-                        orbital(i) == 8 || ...
-                        orbital(i) == 9 ) % dxy dyz dzz dzx dxxyy
-                    res(i) = -1.0*atom.paramPool.imuAmuD;
-                else
-                    throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
-                end
+            if(orbital == 1) % s
+                res = -1.0*atom.paramPool.imuAmuS;
+            elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
+                res = -1.0*atom.paramPool.imuAmuP;
+            elseif(orbital == 5 || ...
+                    orbital == 6 || ...
+                    orbital == 7 || ...
+                    orbital == 8 || ...
+                    orbital == 9 ) % dxy dyz dzz dzx dxxyy
+                res = -1.0*atom.paramPool.imuAmuD;
+            else
+                throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
             end
             if(~isGuess)
                 res = res - (atom.coreCharge - 0.5)*gamma;
             end
         end
         
+        % vectorized version of the above function
+%         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
+%             res = zeros(length(orbital), 1);
+%             for i = 1:length(orbital)
+%                 if(orbital(i) == 1) % s
+%                     res(i) = -1.0*atom.paramPool.imuAmuS;
+%                 elseif(orbital(i) == 4 || orbital(i) == 2 || orbital(i) == 3) % py pz px
+%                     res(i) = -1.0*atom.paramPool.imuAmuP;
+%                 elseif(orbital(i) == 5 || ...
+%                         orbital(i) == 6 || ...
+%                         orbital(i) == 7 || ...
+%                         orbital(i) == 8 || ...
+%                         orbital(i) == 9 ) % dxy dyz dzz dzx dxxyy
+%                     res(i) = -1.0*atom.paramPool.imuAmuD;
+%                 else
+%                     throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
+%                 end
+%             end
+%             if(~isGuess)
+%                 res = res - (atom.coreCharge - 0.5)*gamma;
+%             end
+%         end
+        
         function res = AtomGetBondingParameter(~, atom)
             res = atom.paramPool.bondingParameter;
         end
         
-        function valueZ = ReducedOverlapAOsParameters_Z(~, na, nb, k) % na nb k are of C convention
-            valueZ = 0.0;
-            for i = 0:na
-               for j = 0:nb
-                  if(i+j == k)
-                     tempZ = power(-1.0, nb-j);
-                     tempZ = tempZ .* nchoosek(na, i);
-                     tempZ = tempZ .* nchoosek(nb, j);
-                     valueZ = valueZ + tempZ;
-                  end
-               end
-            end
-        end
-        
-        function valueY = ReducedOverlapAOsParameters_Y(~, na,nb,la,lb,m,i,j)
-            C(1,1,1) =  8.0;
-            C(2,1,2) =  8.0;
-            C(2,2,1) =  4.0;
-            C(3,1,1) = -4.0;
-            C(3,1,3) = 12.0;
-            C(3,2,2) = 12.0;
-            C(3,3,1) =  4.0;
-            C(4,2,1) = -6.0;
-            C(4,2,3) = 30.0;
-            C(4,3,2) = 20.0;
-            C(4,4,1) =  5.0;
-            
-            valueY = 0;
-            if(0<na && 0<nb)
-                for u = 0:la-m
-                    for v = 0:lb-m
-                        if(0<abs(C(la+1,m+1,u+1)) && 0<abs(C(lb+1,m+1,v+1)))
-                            for a = 0:m
-                                for b = 0:m
-                                    for c = 0:u
-                                        for d = 0:v
-                                            for e = 0:na-m-u
-                                                for f = 0:nb-m-v
-                                                    if(i == 2*a+c+d+e+f && j == 2*b+c+d+na+nb-2*m-u-v-e-f)
-                                                        tempY = C(la+1,m+1,u+1)*C(lb+1,m+1,v+1);
-                                                        tempY = tempY .* power(-1.0, m-a+b+d+nb-m-v-f);
-                                                        tempY = tempY .* power(-1.0, v);
-                                                        tempY = tempY .* nchoosek(m, a);
-                                                        tempY = tempY .* nchoosek(m, b);
-                                                        tempY = tempY .* nchoosek(u, c);
-                                                        tempY = tempY .* nchoosek(v, d);
-                                                        tempY = tempY .* nchoosek(na-m-u, e);
-                                                        tempY = tempY .* nchoosek(nb-m-v, f);
-                                                        valueY = valueY + tempY;
-                                                    end
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
+%         function valueZ = ReducedOverlapAOsParameters_Z(~, na, nb, k) % na nb k are of C convention
+%             valueZ = 0.0;
+%             for i = 0:na
+%                for j = 0:nb
+%                   if(i+j == k)
+%                      tempZ = power(-1.0, nb-j);
+%                      tempZ = tempZ .* nchoosek(na, i);
+%                      tempZ = tempZ .* nchoosek(nb, j);
+%                      valueZ = valueZ + tempZ;
+%                   end
+%                end
+%             end
+%         end
+%         
+%         function valueY = ReducedOverlapAOsParameters_Y(~, na,nb,la,lb,m,i,j)
+%             C(1,1,1) =  8.0;
+%             C(2,1,2) =  8.0;
+%             C(2,2,1) =  4.0;
+%             C(3,1,1) = -4.0;
+%             C(3,1,3) = 12.0;
+%             C(3,2,2) = 12.0;
+%             C(3,3,1) =  4.0;
+%             C(4,2,1) = -6.0;
+%             C(4,2,3) = 30.0;
+%             C(4,3,2) = 20.0;
+%             C(4,4,1) =  5.0;
+%             
+%             valueY = 0;
+%             if(0<na && 0<nb)
+%                 for u = 0:la-m
+%                     for v = 0:lb-m
+%                         if(0<abs(C(la+1,m+1,u+1)) && 0<abs(C(lb+1,m+1,v+1)))
+%                             for a = 0:m
+%                                 for b = 0:m
+%                                     for c = 0:u
+%                                         for d = 0:v
+%                                             for e = 0:na-m-u
+%                                                 for f = 0:nb-m-v
+%                                                     if(i == 2*a+c+d+e+f && j == 2*b+c+d+na+nb-2*m-u-v-e-f)
+%                                                         tempY = C(la+1,m+1,u+1)*C(lb+1,m+1,v+1);
+%                                                         tempY = tempY .* power(-1.0, m-a+b+d+nb-m-v-f);
+%                                                         tempY = tempY .* power(-1.0, v);
+%                                                         tempY = tempY .* nchoosek(m, a);
+%                                                         tempY = tempY .* nchoosek(m, b);
+%                                                         tempY = tempY .* nchoosek(u, c);
+%                                                         tempY = tempY .* nchoosek(v, d);
+%                                                         tempY = tempY .* nchoosek(na-m-u, e);
+%                                                         tempY = tempY .* nchoosek(nb-m-v, f);
+%                                                         valueY = valueY + tempY;
+%                                                     end
+%                                                 end
+%                                             end
+%                                         end
+%                                     end
+%                                 end
+%                             end
+%                         end
+%                     end
+%                 end
+%             end
+%         end
         
     end
     
-    methods (Access = private)
+    methods %(Access = private)
         
         function CalcCoreRepulsionEnergy(obj)
             energy = 0.0;
@@ -1685,6 +1802,10 @@ classdef Cndo2 < handle
             axisA)
         
         function fockMatrix = CalcFockMatrix(obj, isGuess)
+            if(obj.theory == EnumTheory.CNDO2)
+                fockMatrix = diag(obj.GetFockDiag(isGuess)) + obj.GetFockOffDiag(isGuess);
+                return;
+            else
             totalNumberAOs   = obj.molecule.totalNumberAOs;
             atomvect = obj.molecule.atomVect;
             totalNumberAtoms = length(atomvect);
@@ -1711,29 +1832,7 @@ classdef Cndo2 < handle
                 end
             end % end of loop A
             fockMatrix = fockMatrix + fockMatrix' - diag(diag(fockMatrix));
-            
-            % atomically vectorized version
-%             fockoffdiag = zeros(totalNumberAOs);
-%             for A = 1:totalNumberAtoms
-%                 atomA = atomvect{A};
-%                 firstAOIndexA = atomA.firstAOIndex;
-%                 lastAOIndexA  = atomA.GetLastAOIndex();
-%                 
-%                 % diag
-%                 mu = firstAOIndexA:lastAOIndexA;
-%                 fockMatrix(mu, mu) = diag(obj.GetFockDiagElement(atomA, mu, isGuess));
-%                 
-%                 % offdiag
-%                 for B = A:totalNumberAtoms % upper part
-%                     atomB = atomvect{B};
-%                     firstAOIndexB = atomB.firstAOIndex;
-%                     lastAOIndexB  = atomB.GetLastAOIndex();
-%                     nu = firstAOIndexB:lastAOIndexB;
-%                     fockoffdiag(mu, nu) = obj.GetFockOffDiagElement(atomA, atomB, mu, nu, isGuess);
-%                 end
-%             end % end of loop A
-%             fockoffdiag = fockoffdiag - tril(fockoffdiag);
-%             fockMatrix = fockMatrix + fockoffdiag + fockoffdiag';
+            end
         end
         
         function h1Matrix = CalcH1Matrix(obj)
