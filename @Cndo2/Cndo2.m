@@ -217,8 +217,11 @@ classdef Cndo2 < handle
                 oldOrbitalElectronPopulation = obj.orbitalElectronPopulation;
                 
                 isGuess = (iterationStep==0 && requiresGuess);
-                
-                obj.fockMatrix = obj.CalcFockMatrix(isGuess);
+                if(isGuess)
+                    obj.fockMatrix = obj.CalcGuessFock();
+                else
+                    obj.fockMatrix = obj.CalcFockMatrix();
+                end
                 
                 % diagonalization of the Fock matrix
                 [orbital, eigenvalue] = eig(obj.fockMatrix);
@@ -840,31 +843,27 @@ classdef Cndo2 < handle
         end
         
         % fully vectorized version
-        function fockdiag = GetFockDiag(obj, isGuess)
+        function fockdiag = GetFockDiag(obj)
             fockdiag = - obj.imuAmuVecBasis;
-            if(~isGuess)
-                gammaijdiag = diag(obj.gammaij);
-                fockdiag = fockdiag - (obj.coreChargeVecBasis - 0.5) .* gammaijdiag;
-                temp = obj.atomicElectronPopulation(obj.mapBasis2Atom) - 0.5 .* diag(obj.orbitalElectronPopulation);
-                fockdiag = fockdiag + temp .* gammaijdiag;
-                
-                diagZeroGammaAB = obj.gammaAB;
-                diagZeroGammaAB = diagZeroGammaAB - diag(diag(diagZeroGammaAB));
-                
-                temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
-                temp = temp(:,ones(1,obj.natom));
-                temp = sum(temp .* diagZeroGammaAB, 1)';
-                fockdiag = fockdiag + temp(obj.mapBasis2Atom);
-            end
+            gammaijdiag = diag(obj.gammaij);
+            fockdiag = fockdiag - (obj.coreChargeVecBasis - 0.5) .* gammaijdiag;
+            temp = obj.atomicElectronPopulation(obj.mapBasis2Atom) - 0.5 .* diag(obj.orbitalElectronPopulation);
+            fockdiag = fockdiag + temp .* gammaijdiag;
+            
+            diagZeroGammaAB = obj.gammaAB;
+            diagZeroGammaAB = diagZeroGammaAB - diag(diag(diagZeroGammaAB));
+            
+            temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
+            temp = temp(:,ones(1,obj.natom));
+            temp = sum(temp .* diagZeroGammaAB, 1)';
+            fockdiag = fockdiag + temp(obj.mapBasis2Atom);
         end
         
-        function fockoffdiag = GetFockOffDiag(obj, isGuess)
+        function fockoffdiag = GetFockOffDiag(obj)
             fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
             fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
             fockoffdiag = fockoffdiag .* obj.overlapAOs;
-            if(~isGuess)
-                fockoffdiag = fockoffdiag - 0.5 .* obj.orbitalElectronPopulation .* obj.gammaij;
-            end
+            fockoffdiag = fockoffdiag - 0.5 .* obj.orbitalElectronPopulation .* obj.gammaij;
             fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
         end
         
@@ -1739,11 +1738,30 @@ classdef Cndo2 < handle
             dxyz,  rAB, ...
             axisA)
         
-        function fockMatrix = CalcFockMatrix(obj, isGuess)
+        function guessFock = CalcGuessFock(obj)
             if(obj.theory == EnumTheory.CNDO2)
-                fockMatrix = diag(obj.GetFockDiag(isGuess)) + obj.GetFockOffDiag(isGuess);
+                fockdiag = - obj.imuAmuVecBasis;
+                fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+                fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
+                fockoffdiag = fockoffdiag .* obj.overlapAOs;
+                fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
+                guessFock = diag(fockdiag) + fockoffdiag;
                 return;
             else
+                guessFock = obj.CalcFockMatrixOld(true);
+            end
+        end
+        
+        function fockMatrix = CalcFockMatrix(obj)
+            if(obj.theory == EnumTheory.CNDO2)
+                fockMatrix = diag(obj.GetFockDiag()) + obj.GetFockOffDiag();
+                return;
+            else
+                fockMatrix = obj.CalcFockMatrixOld(false);
+            end
+        end
+        
+        function fockMatrix = CalcFockMatrixOld(obj, isGuess)
             totalNumberAOs   = obj.molecule.totalNumberAOs;
             atomvect = obj.molecule.atomVect;
             totalNumberAtoms = length(atomvect);
@@ -1770,7 +1788,6 @@ classdef Cndo2 < handle
                 end
             end % end of loop A
             fockMatrix = fockMatrix + fockMatrix' - diag(diag(fockMatrix));
-            end
         end
         
         function h1Matrix = CalcH1Matrix(obj)
@@ -1778,7 +1795,7 @@ classdef Cndo2 < handle
             bkupAtomicElectronPopulation = obj.atomicElectronPopulation;
             obj.orbitalElectronPopulation = zeros(size(obj.orbitalElectronPopulation));
             obj.atomicElectronPopulation = zeros(size(obj.atomicElectronPopulation));
-            h1Matrix = obj.CalcFockMatrix(false);
+            h1Matrix = obj.CalcFockMatrix();
             obj.orbitalElectronPopulation = bkupOrbitalElectronPopulation;
             obj.atomicElectronPopulation = bkupAtomicElectronPopulation;
         end
@@ -1965,8 +1982,7 @@ classdef Cndo2 < handle
         
         function elecSCFEnergy = CalcElecSCFEnergy(obj)
             % use density matrix for electronic energy
-            isGuess = false;
-            fMatrix = obj.CalcFockMatrix(isGuess);
+            fMatrix = obj.CalcFockMatrix();
             hMatrix = obj.h1Matrix;
             electronicEnergy = sum(sum(obj.orbitalElectronPopulation .* (hMatrix+fMatrix)));
             electronicEnergy = electronicEnergy * 0.5;
