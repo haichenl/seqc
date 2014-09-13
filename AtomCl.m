@@ -15,6 +15,8 @@ classdef AtomCl < Atom
             obj.valence(9) = 9;
             for i=5:length(obj.valence)
                 obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence(i));
+                obj.lVec(i) = obj.realSphericalHarmonicsIndices{i}.l;
+                obj.mVec(i) = obj.realSphericalHarmonicsIndices{i}.m;
             end
         end
         
@@ -22,6 +24,8 @@ classdef AtomCl < Atom
             if(length(obj.valence) > 4)
                 obj.valence = obj.valence(1:4);
                 obj.realSphericalHarmonicsIndices = obj.realSphericalHarmonicsIndices{1:4};
+                obj.lVec = obj.lVec(1:4);
+                obj.mVec = obj.mVec(1:4);
             end
         end
         
@@ -40,24 +44,13 @@ classdef AtomCl < Atom
 %             obj.valence{2} = EnumOrbital.py;
 %             obj.valence{3} = EnumOrbital.pz;
 %             obj.valence{4} = EnumOrbital.px;
-            obj.valence(1) = 1;
-            obj.valence(2) = 2;
-            obj.valence(3) = 3;
-            obj.valence(4) = 4;
-%             if(Arguments.GetInstance().GetCurrentTheory() == EnumTheory.CNDO2)
-% %                 obj.valence{5} = EnumOrbital.dxy;
-% %                 obj.valence{6} = EnumOrbital.dyz;
-% %                 obj.valence{7} = EnumOrbital.dzz;
-% %                 obj.valence{8} = EnumOrbital.dzx;
-% %                 obj.valence{9} = EnumOrbital.dxxyy;
-%                 obj.valence(5) = 5;
-%                 obj.valence(6) = 6;
-%                 obj.valence(7) = 7;
-%                 obj.valence(8) = 8;
-%                 obj.valence(9) = 9;
-%             end
+            obj.valence = (1:4)';
+            obj.lVec = zeros(length(obj.valence), 1);
+            obj.mVec = zeros(length(obj.valence), 1);
             for i=1:length(obj.valence)
                 obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence(i));
+                obj.lVec(i) = obj.realSphericalHarmonicsIndices{i}.l;
+                obj.mVec(i) = obj.realSphericalHarmonicsIndices{i}.m;
             end
             obj.vdWCoefficient = 8.00*Arguments.GetInstance().GetJ2AU()...
                 *power(Arguments.GetInstance().GetNm2AU(),6.0)...

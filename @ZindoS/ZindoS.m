@@ -71,6 +71,10 @@ classdef ZindoS < Cndo2
             obj.enableAtomTypes{end+1} = EnumAtom.Cl;
         end
         
+        % generate protected vectorization stuffs
+        function Preiterations(obj)
+        end
+        
         %    virtual void CalcCISProperties();
         %    virtual void CalcElectronicTransitionDipoleMoment(double* transitionDipoleMoment,
         %                                                      int to, int from,

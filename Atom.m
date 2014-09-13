@@ -7,6 +7,11 @@ classdef (Abstract) Atom < handle
         atomicMass;
         valence;
         realSphericalHarmonicsIndices;
+        
+        % for vectorize
+        lVec;
+        mVec;
+        
         valenceShellType;
         firstAOIndex;
         numberValenceElectrons;
@@ -65,27 +70,27 @@ classdef (Abstract) Atom < handle
         end
         
         function res = GetEffectivePrincipalQuantumNumber(~, shellType) % ShellType shellType
-%             if(shellType == 1) % EnumShell.kShell)
-%                 res = 1.0;
-%             elseif(shellType == 2) % EnumShell.lShell)
-%                 res = 2.0;
-%             elseif(shellType == 3) % EnumShell.mShell)
-%                 res = 3.0;
-%             elseif(shellType == 4) % EnumShell.nShell)
-%                 res = 3.7;
-%             else
-%                 throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
-%             end
-            res = double(shellType);
-            for i = 1:length(res)
-                if(res(i) == 1 || res(i) == 2 || res(i) == 3)
-                    % do nothing
-                elseif(res(i) == 4)
-                    res(i) = 3.7;
-                else
-                    throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
-                end
+            if(shellType == 1) % EnumShell.kShell)
+                res = 1.0;
+            elseif(shellType == 2) % EnumShell.lShell)
+                res = 2.0;
+            elseif(shellType == 3) % EnumShell.mShell)
+                res = 3.0;
+            elseif(shellType == 4) % EnumShell.nShell)
+                res = 3.7;
+            else
+                throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
             end
+%             res = double(shellType);
+%             for i = 1:length(res)
+%                 if(res(i) == 1 || res(i) == 2 || res(i) == 3)
+%                     % do nothing
+%                 elseif(res(i) == 4)
+%                     res(i) = 3.7;
+%                 else
+%                     throw(MException('Atom:GetEffectivePrincipalQuantumNumber', 'Shell type wrong.'));
+%                 end
+%             end
         end
         
     end

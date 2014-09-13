@@ -162,9 +162,10 @@ classdef Cndo2 < handle
             
             tempK = double(valenceShellTypeVecAtom<3);
             tempK = tempK*tempK';
-            tempK = ~tempK;
-            tempK = tempK .* (-0.25);
-            obj.bondParamKMat = tempK + 1;
+            tempK2 = tempK;
+            tempK2(tempK==1) = obj.bondingAdjustParameterK(1);
+            tempK2(tempK==0) = obj.bondingAdjustParameterK(2);
+            obj.bondParamKMat = tempK2;
             
             obj.mapBasis2AngularType = zeros(obj.nbf,1);
             for i = 1:obj.nbf
@@ -193,8 +194,8 @@ classdef Cndo2 < handle
             % Cndo2::MallocSCFTemporaryMatrices
             diisNumErrorVect = Arguments.GetInstance().diisNumErrorVectSCF;
             if(0<diisNumErrorVect)
-                diisStoredDensityMatrix = zeros(obj.molecule.totalNumberAOs* obj.molecule.totalNumberAOs, diisNumErrorVect);
-                diisStoredErrorVect = zeros(obj.molecule.totalNumberAOs()* obj.molecule.totalNumberAOs, diisNumErrorVect);
+                diisStoredDensityMatrix = zeros(obj.molecule.totalNumberAOs()* obj.molecule.totalNumberAOs, diisNumErrorVect);
+                diisStoredErrorVect = zeros(obj.molecule.totalNumberAOs* obj.molecule.totalNumberAOs, diisNumErrorVect);
                 diisErrorProducts = zeros(diisNumErrorVect+1);
                 diisErrorCoefficients = zeros(diisNumErrorVect+1, 1);
             end
@@ -292,7 +293,7 @@ classdef Cndo2 < handle
         
     end
     
-    methods %(Access = protected)
+    methods (Access = protected)
         
         function SetEnableAtomTypes(obj)
             obj.enableAtomTypes = {};
@@ -523,6 +524,35 @@ classdef Cndo2 < handle
             end
         end
         
+        function value = GetReducedOverlapAOsZ(obj, na, nb, alpha, beta)
+            auxAVec = zeros(na+nb+1,1);
+            auxBVec = zeros(na+nb+1,1);
+            tmp1 = 0.5*(alpha+beta);
+            tmp2 = 0.5*(alpha-beta);
+            for k = 1:na+nb+1
+                auxAVec(k) = obj.GetAuxiliaryA(k-1, tmp1);
+                auxBVec(k) = obj.GetAuxiliaryB(na+nb-k+1, tmp2);
+            end
+            temp = reshape(obj.ReducedOverlapAOsParameters_Z(na+1,nb+1,1:na+nb+1), [], 1);
+            value = sum(temp.*auxAVec.*auxBVec);
+            value = value .* 0.5;
+        end
+        
+        function value = GetReducedOverlapAOsY(obj, na, la, m, nb, lb, alpha, beta)
+            auxAVec = zeros(9,1);
+            auxBVec = zeros(9,1);
+            tmp1 = 0.5*(alpha+beta);
+            tmp2 = 0.5*(alpha-beta);
+            for i = 1:9
+                auxAVec(i) = obj.GetAuxiliaryA(i-1, tmp1);
+                auxBVec(i) = obj.GetAuxiliaryB(i-1, tmp2);
+            end
+            temp = reshape(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,1:9,1:9), 9, 9);
+            auxMat = auxAVec * auxBVec';
+            value = sum(sum(temp.*auxMat));
+            value = value .* obj.GetAuxiliaryD(la, lb, m);
+        end
+        
         % not tested
         function value = GetReducedOverlapAOs1stDerivativeAlpha(obj, na, la, m, nb, lb, alpha, beta)
             value = 0.0;
@@ -736,36 +766,36 @@ classdef Cndo2 < handle
                     if(R>0.0)
                         % (B.56)
                         value = power(0.5*R, 2.0*na);
-                        value = value .* obj.GetReducedOverlapAOs(2*na-1, 0, 2.0*orbitalExponentA*R, 0);
+                        value = value .* obj.GetReducedOverlapAOsZ(2*na-1, 0, 2.0*orbitalExponentA*R, 0);
                         
                         for l = 1:2*nb
                             temp = l;
                             temp = temp .* power(2.0*orbitalExponentB, 2*nb-l);
-                            temp = temp ./ (factorial(2*nb-l)*2.0*nb);
+                            temp = temp ./ (CachedFactorial(2*nb-l)*2.0*nb);
                             temp = temp .* power(0.5*R, 2.0*nb-l+2.0*na);
-                            temp = temp .* obj.GetReducedOverlapAOs(2*na-1, 2*nb-l, 2.0*orbitalExponentA*R, 2.0*orbitalExponentB*R);
+                            temp = temp .* obj.GetReducedOverlapAOsZ(2*na-1, 2*nb-l, 2.0*orbitalExponentA*R, 2.0*orbitalExponentB*R);
                             value = value - temp;
                         end
                         
                         value = value .* power(2.0*orbitalExponentA, 2.0*na+1.0);
-                        value = value ./ factorial(2*na);
+                        value = value ./ CachedFactorial(2*na);
                     else
                         % (B.62)
-                        value =  factorial(2*na-1);
+                        value =  CachedFactorial(2*na-1);
                         value = value ./ power(2.0*orbitalExponentA, 2.0*na);
                         
                         for l = 1:2*nb
                             temp = l;
                             temp = temp .* power(2.0*orbitalExponentB, 2*nb-l);
-%                             temp = temp .* factorial(2*na+2*nb-l-1);
-%                             temp = temp ./ factorial(2*nb-l);
+%                             temp = temp .* CachedFactorial(2*na+2*nb-l-1);
+%                             temp = temp ./ CachedFactorial(2*nb-l);
                             temp = temp .* prod(2*nb-l+1:2*na+2*nb-l-1);
                             temp = temp ./ (2.0*nb);
                             temp = temp ./ power( 2.0*orbitalExponentA + 2.0*orbitalExponentB, 2.0*(na+nb)-l );
                             value = value - temp;
                         end
                         value = value .* power(2.0*orbitalExponentA, 2.0*na+1);
-                        value = value ./ factorial(2*na);
+                        value = value ./ CachedFactorial(2*na);
                     end
                     gammaAB(A, B) = value;
                 end
@@ -811,14 +841,15 @@ classdef Cndo2 < handle
         
         % fully vectorized version
         function fockdiag = GetFockDiag(obj, isGuess)
-            gammaijdiag = diag(obj.gammaij);
             fockdiag = - obj.imuAmuVecBasis;
             if(~isGuess)
+                gammaijdiag = diag(obj.gammaij);
                 fockdiag = fockdiag - (obj.coreChargeVecBasis - 0.5) .* gammaijdiag;
                 temp = obj.atomicElectronPopulation(obj.mapBasis2Atom) - 0.5 .* diag(obj.orbitalElectronPopulation);
                 fockdiag = fockdiag + temp .* gammaijdiag;
                 
-                diagZeroGammaAB = obj.gammaAB - diag(diag(obj.gammaAB));
+                diagZeroGammaAB = obj.gammaAB;
+                diagZeroGammaAB = diagZeroGammaAB - diag(diag(diagZeroGammaAB));
                 
                 temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
                 temp = temp(:,ones(1,obj.natom));
@@ -828,17 +859,13 @@ classdef Cndo2 < handle
         end
         
         function fockoffdiag = GetFockOffDiag(obj, isGuess)
-            
-            
             fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
             fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
             fockoffdiag = fockoffdiag .* obj.overlapAOs;
-            
             if(~isGuess)
                 fockoffdiag = fockoffdiag - 0.5 .* obj.orbitalElectronPopulation .* obj.gammaij;
             end
             fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
-            
         end
         
         %    void TransposeFockMatrixMatrix(double** transposedFockMatrix) const;
@@ -847,15 +874,14 @@ classdef Cndo2 < handle
             na = double(atomA.valenceShellType);
             nb = double(atomB.valenceShellType);
             
-%             diatomicOverlapAOs = zeros(double(EnumOrbital.OrbitalType_end));
+            % diatomicOverlapAOs = zeros(double(EnumOrbital.OrbitalType_end));
             diatomicOverlapAOs = zeros(9);
             rAB = obj.molecule.GetDistanceAtoms(atomA, atomB); % Inter nuclear distance between aton A and B.
-            
+            coeff = power(rAB, na+nb+1.0) ./ sqrt(CachedFactorial(2*na)*CachedFactorial(2*nb));
             for a = 1:length(atomA.valence)
                 valenceOrbitalA = atomA.valence(a);
                 realShpericalHarmonicsA = atomA.realSphericalHarmonicsIndices{a};
                 orbitalExponentA = obj.AtomGetOrbitalExponent(atomA, atomA.valenceShellType, valenceOrbitalA);
-
                 for b = 1:length(atomB.valence)
                     valenceOrbitalB = atomB.valence(b);
                     realShpericalHarmonicsB = atomB.realSphericalHarmonicsIndices{b};
@@ -864,21 +890,18 @@ classdef Cndo2 < handle
                         m = abs(realShpericalHarmonicsA.m);
                         alpha = orbitalExponentA * rAB;
                         beta =  orbitalExponentB * rAB;
-
-                        reducedOverlapAOs = obj.GetReducedOverlapAOs(na, realShpericalHarmonicsA.l, m,...
+                        
+                        reducedOverlapAOs = obj.GetReducedOverlapAOsY(na, realShpericalHarmonicsA.l, m,...
                             nb, realShpericalHarmonicsB.l, alpha, beta);
-
-
-                        pre =  power(2.0*orbitalExponentA, na+0.5);
-                        pre = pre * power(2.0*orbitalExponentB, nb+0.5);
-                        factorials = factorial(2*na)*factorial(2*nb);
-                        pre = pre / sqrt(factorials);
-                        pre = pre * power(rAB/2.0, na+nb+1.0);
-
-                        diatomicOverlapAOs(valenceOrbitalA, valenceOrbitalB) = pre*reducedOverlapAOs;
+                        
+                        pre =  power(orbitalExponentA, na+0.5);
+                        pre = pre .* power(orbitalExponentB, nb+0.5);
+                        
+                        diatomicOverlapAOs(valenceOrbitalA, valenceOrbitalB) = pre .* reducedOverlapAOs;
                     end
                 end
             end
+            diatomicOverlapAOs = diatomicOverlapAOs .* coeff;
         end
         
         % not tested
@@ -934,7 +957,7 @@ classdef Cndo2 < handle
                         
                         pre =  power(2.0*orbitalExponentA, na+0.5);
                         pre = pre * power(2.0*orbitalExponentB, nb+0.5);
-                        factorials = factorial(2*na)*factorial(2*nb);
+                        factorials = CachedFactorial(2*na)*CachedFactorial(2*nb);
                         pre = pre / sqrt(factorials);
                         pre = pre / power(2.0, na+nb+1.0);
                         
@@ -1030,7 +1053,7 @@ classdef Cndo2 < handle
                         
                         pre =  power(2.0*orbitalExponentA, na+0.5);
                         pre = pre * power(2.0*orbitalExponentB, nb+0.5);
-                        factorials = factorial(2*na)*factorial(2*nb);
+                        factorials = CachedFactorial(2*na)*CachedFactorial(2*nb);
                         pre = pre / sqrt(factorials);
                         pre = pre / power(2.0, na+nb+1.0);
                         
@@ -1415,28 +1438,28 @@ classdef Cndo2 < handle
         
         function res = AtomGetOrbitalExponent(~, atom, shellType, orbitalType)
             if(shellType == 1 && orbitalType == 1) % kShell, s
-                res = atom.paramPool.effectiveNuclearChargeK/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeK;
             elseif(shellType == 2 && (orbitalType == 1  || ...
                     orbitalType == 4 || ...
                     orbitalType == 2 || ...
                     orbitalType == 3)) % lShell, s px py pz
-                res = atom.paramPool.effectiveNuclearChargeL/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeL / 2; % see atom.GetEffectivePrincipalQuantumNumber(shellType) for denominators
             elseif(shellType == 3 && (orbitalType == 1  || ...
                     orbitalType == 4 || ...
                     orbitalType == 2 || ...
                     orbitalType == 3 )) % mShell, s px py pz
-                res = atom.paramPool.effectiveNuclearChargeMsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeMsp / 3;
             elseif(shellType == 3 && (orbitalType == 5  || ...
                     orbitalType == 6 ||...
                     orbitalType == 7 ||...
                     orbitalType == 8 ||...
                     orbitalType == 9)) % mShell, dxy dyz dzz dzx dxxyy
-                res = atom.paramPool.effectiveNuclearChargeMd/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeMd / 3;
             elseif(shellType == 4 && (1  || ...
                     orbitalType == 4 || ...
                     orbitalType == 2 || ...
                     orbitalType == 3 )) % nShell, s px py pz
-                res = atom.paramPool.effectiveNuclearChargeNsp/atom.GetEffectivePrincipalQuantumNumber(shellType);
+                res = atom.paramPool.effectiveNuclearChargeNsp / 3.7;
             else
                 throw(MException('Cndo2:AtomGetOrbitalExponent', 'Shell/Orbital type wrong.'));
             end
@@ -1461,98 +1484,13 @@ classdef Cndo2 < handle
             end
         end
         
-        % vectorized version of the above function
-%         function res = AtomGetCoreIntegral(~, atom, orbital, gamma, isGuess) % OrbitalType orbital
-%             res = zeros(length(orbital), 1);
-%             for i = 1:length(orbital)
-%                 if(orbital(i) == 1) % s
-%                     res(i) = -1.0*atom.paramPool.imuAmuS;
-%                 elseif(orbital(i) == 4 || orbital(i) == 2 || orbital(i) == 3) % py pz px
-%                     res(i) = -1.0*atom.paramPool.imuAmuP;
-%                 elseif(orbital(i) == 5 || ...
-%                         orbital(i) == 6 || ...
-%                         orbital(i) == 7 || ...
-%                         orbital(i) == 8 || ...
-%                         orbital(i) == 9 ) % dxy dyz dzz dzx dxxyy
-%                     res(i) = -1.0*atom.paramPool.imuAmuD;
-%                 else
-%                     throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
-%                 end
-%             end
-%             if(~isGuess)
-%                 res = res - (atom.coreCharge - 0.5)*gamma;
-%             end
-%         end
-        
         function res = AtomGetBondingParameter(~, atom)
             res = atom.paramPool.bondingParameter;
         end
         
-%         function valueZ = ReducedOverlapAOsParameters_Z(~, na, nb, k) % na nb k are of C convention
-%             valueZ = 0.0;
-%             for i = 0:na
-%                for j = 0:nb
-%                   if(i+j == k)
-%                      tempZ = power(-1.0, nb-j);
-%                      tempZ = tempZ .* nchoosek(na, i);
-%                      tempZ = tempZ .* nchoosek(nb, j);
-%                      valueZ = valueZ + tempZ;
-%                   end
-%                end
-%             end
-%         end
-%         
-%         function valueY = ReducedOverlapAOsParameters_Y(~, na,nb,la,lb,m,i,j)
-%             C(1,1,1) =  8.0;
-%             C(2,1,2) =  8.0;
-%             C(2,2,1) =  4.0;
-%             C(3,1,1) = -4.0;
-%             C(3,1,3) = 12.0;
-%             C(3,2,2) = 12.0;
-%             C(3,3,1) =  4.0;
-%             C(4,2,1) = -6.0;
-%             C(4,2,3) = 30.0;
-%             C(4,3,2) = 20.0;
-%             C(4,4,1) =  5.0;
-%             
-%             valueY = 0;
-%             if(0<na && 0<nb)
-%                 for u = 0:la-m
-%                     for v = 0:lb-m
-%                         if(0<abs(C(la+1,m+1,u+1)) && 0<abs(C(lb+1,m+1,v+1)))
-%                             for a = 0:m
-%                                 for b = 0:m
-%                                     for c = 0:u
-%                                         for d = 0:v
-%                                             for e = 0:na-m-u
-%                                                 for f = 0:nb-m-v
-%                                                     if(i == 2*a+c+d+e+f && j == 2*b+c+d+na+nb-2*m-u-v-e-f)
-%                                                         tempY = C(la+1,m+1,u+1)*C(lb+1,m+1,v+1);
-%                                                         tempY = tempY .* power(-1.0, m-a+b+d+nb-m-v-f);
-%                                                         tempY = tempY .* power(-1.0, v);
-%                                                         tempY = tempY .* nchoosek(m, a);
-%                                                         tempY = tempY .* nchoosek(m, b);
-%                                                         tempY = tempY .* nchoosek(u, c);
-%                                                         tempY = tempY .* nchoosek(v, d);
-%                                                         tempY = tempY .* nchoosek(na-m-u, e);
-%                                                         tempY = tempY .* nchoosek(nb-m-v, f);
-%                                                         valueY = valueY + tempY;
-%                                                     end
-%                                                 end
-%                                             end
-%                                         end
-%                                     end
-%                                 end
-%                             end
-%                         end
-%                     end
-%                 end
-%             end
-%         end
-        
     end
     
-    methods %(Access = private)
+    methods (Access = private)
         
         function CalcCoreRepulsionEnergy(obj)
             energy = 0.0;
@@ -1764,7 +1702,7 @@ classdef Cndo2 < handle
                     atomB = atomvect{B};
                     diatomicOverlapAOs = obj.CalcDiatomicOverlapAOsInDiatomicFrame(atomA, atomB);
                     rotatingMatrix = obj.CalcRotatingMatrix(atomA, atomB);
-%                     diatomicOverlapAOs = obj.RotateDiatmicOverlapAOsToSpaceFrame(diatomicOverlapAOs, rotatingMatrix);
+                    % diatomicOverlapAOs = obj.RotateDiatmicOverlapAOsToSpaceFrame(diatomicOverlapAOs, rotatingMatrix);
                     diatomicOverlapAOs = rotatingMatrix * diatomicOverlapAOs * rotatingMatrix; % rotate
                     overlapAOs = obj.SetOverlapAOsElement(overlapAOs, diatomicOverlapAOs, atomA, atomB, symmetrize);
                 end
@@ -1870,36 +1808,32 @@ classdef Cndo2 < handle
             end
         end
         
-        function value = GetAuxiliaryA(~, k, rho)
-            tmp1 = 0.0;
-%             value = exp(-1.0*rho)*factorial(k);
-            value = exp(-1.0*rho);
-            for mu = 1:k+1
-                tmp2=rho^mu; % tmp2 = pow(rho,mu)
-%                 tmp1 = tmp1 + 1.0/(tmp2*factorial(k-mu+1));
-                tmp1 = tmp1 + 1.0/(tmp2/prod(k-mu+2:k));
+        function value = GetAuxiliaryA(~, k, rho)            
+            tmp1 = 1/rho;
+            tmp2 = rho;
+            product = 1;
+            for mu = 0:k-1
+                tmp2 = tmp2.*rho; % tmp2 = pow(rho,mu)
+                product = product .* (k-mu); % product = k!/(k-mu+1)!
+                tmp1 = tmp1 + product/tmp2;
             end
-            value = value .* tmp1;
+            value = exp(-rho) .* tmp1;
         end
         
         function value = GetAuxiliaryB(~, k, rho)
-            tmp1 = 0.0;
-            tmp2 = 0.0;
-            if(abs(rho)>0)
-                pre1 = -1.0*exp(-1.0*rho);
-                pre2 = -1.0*exp(rho);
-                for mu = 1:k+1
-                    tmp3 = rho^mu; % tmp3 = pow(rho,mu)
-                    tmp4 = -1.0; % tmp4 = pow(-1.0,k-mu)
-                    if(mod((k-mu),2)==0)
-                        tmp4=1.0;
-                    end
-%                     tmp1 = tmp1 + factorial(k)/factorial(k-mu+1)     /tmp3;
-%                     tmp2 = tmp2 + factorial(k)/factorial(k-mu+1)*tmp4/tmp3;
-                    tmp1 = tmp1 + prod(k-mu+2:k)     /tmp3;
-                    tmp2 = tmp2 + prod(k-mu+2:k)*tmp4/tmp3;
+            if(rho~=0)
+                tmp1 = 1/rho;
+                tmp2 = tmp1 .* (-1.0)^(k+1);
+                tmp3 = rho;
+                product = 1;
+                for mu = 0:k-1
+                    tmp3 = tmp3.*rho; % tmp3 = pow(rho,mu)
+                    product = product .* (k-mu); % product = k!/(k-mu+1)!
+                    prodtmp = product ./ tmp3;
+                    tmp1 = tmp1 + prodtmp;
+                    tmp2 = tmp2 + prodtmp.*(-1.0)^(k-mu);
                 end
-                value = pre1*tmp1 + pre2*tmp2;
+                value = -exp(-rho).*tmp1 - exp(rho).*tmp2;
             else
                 if(mod(k,2) == 0)
                     value = 2.0/(1.0+k);
@@ -1913,10 +1847,10 @@ classdef Cndo2 < handle
             if(m<0)
                 throw(MException('Cndo2:GetAuxiliaryD', 'm < 0'));
             end
-            tmp = factorial(m+1)/8.0;
+            tmp = CachedFactorial(m+1)/8.0;
             pre = tmp*tmp;
-            termA = ( (2.0*la+1.0)*factorial(la-m) ) / ( 2.0*factorial(la+m) );
-            termB = ( (2.0*lb+1.0)*factorial(lb-m) ) / ( 2.0*factorial(lb+m) );
+            termA = ( (2.0*la+1.0)*CachedFactorial(la-m) ) / ( 2.0*CachedFactorial(la+m) );
+            termB = ( (2.0*lb+1.0)*CachedFactorial(lb-m) ) / ( 2.0*CachedFactorial(lb+m) );
             value = pre*sqrt(termA)*sqrt(termB);
         end
         

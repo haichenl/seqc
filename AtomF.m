@@ -17,12 +17,13 @@ classdef AtomF < Atom
             obj.coreCharge = 7.0;
             obj.numberValenceElectrons = 7;
             obj.valenceShellType = 2; % lShell
-            obj.valence(1) = 1; % s
-            obj.valence(2) = 2; % py
-            obj.valence(3) = 3; % pz
-            obj.valence(4) = 4; % px
+            obj.valence = (1:4)';
+            obj.lVec = zeros(length(obj.valence), 1);
+            obj.mVec = zeros(length(obj.valence), 1);
             for i=1:length(obj.valence)
                 obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence(i));
+                obj.lVec(i) = obj.realSphericalHarmonicsIndices{i}.l;
+                obj.mVec(i) = obj.realSphericalHarmonicsIndices{i}.m;
             end
             obj.vdWCoefficient = 0.57*Arguments.GetInstance().GetJ2AU()...
                 *power(Arguments.GetInstance().GetNm2AU(),6.0)...

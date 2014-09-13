@@ -23,6 +23,10 @@ classdef Indo < Cndo2
             obj.enableAtomTypes{end+1} = EnumAtom.F;
         end
         
+        % generate protected vectorization stuffs
+        function Preiterations(obj)
+        end
+        
         function value = GetFockDiagElement(obj, atomA, mu, isGuess)
             indexAtomA = atomA.index;
             firstAOIndexA = atomA.GetFirstAOIndex();
