@@ -107,9 +107,9 @@ classdef Indo < Cndo2
             betaS_ = betaS_ .* obj.overlapAOs;
             obj.betaS = betaS_;
             
-            gammaOff = obj.gammaAB - diag(diag(obj.gammaAB));
-            gammaOff = gammaOff(obj.mapBasis2Atom, obj.mapBasis2Atom);
-            gammaEC_ = 3.*obj.indoExchangeMat - obj.indoCoulombMat - gammaOff;
+            gammaEC_ = obj.gammaAB - diag(diag(obj.gammaAB));
+            gammaEC_ = gammaEC_(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            gammaEC_ = 3.*obj.indoExchangeMat - obj.indoCoulombMat - gammaEC_;
             gammaEC_ = gammaEC_ ./ 2;
             obj.gammaEC = gammaEC_;
         end

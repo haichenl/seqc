@@ -220,7 +220,6 @@ classdef Cndo2 < handle
         end
         
         function DoSCF(obj)
-            requiresGuess = true;
             
             % Cndo2::MallocSCFTemporaryMatrices
             diisNumErrorVect = Arguments.GetInstance().diisNumErrorVectSCF;
@@ -242,26 +241,19 @@ classdef Cndo2 < handle
             obj.h1Matrix = obj.CalcH1Matrix();
             
             % SCF
+            % 0th iter
+            obj.fockMatrix = obj.CalcGuessFock();
+            obj.DiagonalizeFock();
+            
             maxIterationsSCF = Arguments.GetInstance().maxIterationsSCF;
-            for iterationStep = 0:maxIterationsSCF-1
+            for iterationStep = 1:maxIterationsSCF
                 obj.atomicElectronPopulation = obj.CalcAtomicElectronPopulation();
                 oldOrbitalElectronPopulation = obj.orbitalElectronPopulation;
                 
-                isGuess = (iterationStep==0 && requiresGuess);
-                if(isGuess)
-                    obj.fockMatrix = obj.CalcGuessFock();
-                else
-                    obj.fockMatrix = obj.CalcFockMatrix();
-                end
+                obj.fockMatrix = obj.CalcFockMatrix();
                 
                 % diagonalization of the Fock matrix
-                [orbital, eigenvalue] = eig(obj.fockMatrix);
-                
-                [obj.energiesMO, order] = sort(diag(eigenvalue));
-                orbital = orbital(:, order);
-                numberTotalValenceElectrons = obj.molecule.totalNumberValenceElectrons;
-                obj.orbitalElectronPopulation = 2 .* orbital(:, 1:numberTotalValenceElectrons/2) ...
-                    *orbital(:, 1:numberTotalValenceElectrons/2)';
+                obj.DiagonalizeFock();
                 
 %                 disp(['iter', num2str(iterationStep)]);
                 
@@ -273,25 +265,23 @@ classdef Cndo2 < handle
                     obj.CalcSCFProperties();
                     break;
                 else
-                    if(~isGuess)
-                        [obj.orbitalElectronPopulation, ...
-                            diisStoredDensityMatrix,...
-                            diisStoredErrorVect,...
-                            diisErrorProducts,...
-                            diisErrorCoefficients] = obj.DoDIIS(obj.orbitalElectronPopulation,...
-                            oldOrbitalElectronPopulation,...
-                            diisStoredDensityMatrix,...
-                            diisStoredErrorVect,...
-                            diisErrorProducts,...
-                            diisErrorCoefficients,...
-                            diisNumErrorVect,...
-                            iterationStep);
-                        %                obj.DoDamp(rmsDensity,
-                        %                             hasAppliedDamping,
-                        %                             obj.orbitalElectronPopulation,
-                        %                             oldOrbitalElectronPopulation,
-                        %                             *obj.molecule);
-                    end
+                    [obj.orbitalElectronPopulation, ...
+                        diisStoredDensityMatrix,...
+                        diisStoredErrorVect,...
+                        diisErrorProducts,...
+                        diisErrorCoefficients] = obj.DoDIIS(obj.orbitalElectronPopulation,...
+                        oldOrbitalElectronPopulation,...
+                        diisStoredDensityMatrix,...
+                        diisStoredErrorVect,...
+                        diisErrorProducts,...
+                        diisErrorCoefficients,...
+                        diisNumErrorVect,...
+                        iterationStep);
+                    %                obj.DoDamp(rmsDensity,
+                    %                             hasAppliedDamping,
+                    %                             obj.orbitalElectronPopulation,
+                    %                             oldOrbitalElectronPopulation,
+                    %                             *obj.molecule);
                 end
                 
                 % SCF fails
@@ -2058,6 +2048,15 @@ classdef Cndo2 < handle
                 +obj.coreRepulsionEnergy...
                 +obj.coreEpcCoulombEnergy...
                 +obj.vdWCorrectionEnergy;
+        end
+        
+        function DiagonalizeFock(obj)
+            [orbital, eigenvalue] = eig(obj.fockMatrix);
+            [obj.energiesMO, order] = sort(diag(eigenvalue));
+            orbital = orbital(:, order);
+            numberTotalValenceElectrons = obj.molecule.totalNumberValenceElectrons;
+            obj.orbitalElectronPopulation = 2 .* orbital(:, 1:numberTotalValenceElectrons/2) ...
+                *orbital(:, 1:numberTotalValenceElectrons/2)';
         end
         
     end
