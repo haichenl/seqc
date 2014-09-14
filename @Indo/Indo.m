@@ -12,6 +12,11 @@ classdef Indo < Cndo2
         indoG1CoefficientVecBasis;
         indoF2CoefficientVecBasis;
         
+        indoCoulombMat;
+        indoExchangeMat;
+        betaS;
+        gammaEC;
+        
     end
     
     methods (Access = public)
@@ -38,7 +43,7 @@ classdef Indo < Cndo2
                     obj.indoG1CoefficientVecBasis(i) = atom.paramPool.indoG1CoefficientP;
                     obj.indoF2CoefficientVecBasis(i) = atom.paramPool.indoF2CoefficientP;
                 else
-                    throw(MException('Indo:Preiterations', 'Angular type wrong.'));
+                    throw(MException('Indo:SetMolecule', 'Angular type wrong.'));
                 end
             end
         end
@@ -82,6 +87,31 @@ classdef Indo < Cndo2
             obj.indoG1VecShell = obj.indoG1VecAtom(obj.mapShell2Atom);
             obj.indoG1VecBasis = obj.indoG1VecAtom(obj.mapBasis2Atom);
             obj.indoF2VecBasis = obj.indoF2VecAtom(obj.mapBasis2Atom);
+            
+            F2Mat = diag(obj.indoF2VecShell);
+            F2Mat = F2Mat(obj.mapBasis2Shell, obj.mapBasis2Shell);
+            F2MatDiag = diag(diag(F2Mat));
+            F2MatOffDiag = F2Mat - F2MatDiag;
+            G1Mat = diag(obj.indoG1VecAtom);
+            G1Mat = G1Mat(obj.mapShell2Atom, obj.mapShell2Atom);
+            G1Mat = G1Mat - diag(diag(G1Mat));
+            G1Mat = G1Mat(obj.mapBasis2Shell, obj.mapBasis2Shell);
+            gammaSemiDiag = diag(diag(obj.gammaAB));
+            gammaSemiDiag = gammaSemiDiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            obj.indoCoulombMat = gammaSemiDiag + 4/25 .* F2MatDiag - 2/25 .* F2MatOffDiag;
+            obj.indoExchangeMat = 1/3 .* G1Mat + 3/25 .* F2MatOffDiag + diag(diag(obj.indoCoulombMat));
+            
+            betaS_ = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            betaS_ = betaS_ - diag(diag(betaS_));
+            betaS_ = betaS_(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            betaS_ = betaS_ .* obj.overlapAOs;
+            obj.betaS = betaS_;
+            
+            gammaOff = obj.gammaAB - diag(diag(obj.gammaAB));
+            gammaOff = gammaOff(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            gammaEC_ = 3.*obj.indoExchangeMat - obj.indoCoulombMat - gammaOff;
+            gammaEC_ = gammaEC_ ./ 2;
+            obj.gammaEC = gammaEC_;
         end
         
         function value = GetFockDiagElement(obj, atomA, mu, isGuess)
@@ -114,35 +144,6 @@ classdef Indo < Cndo2
             end
         end
         
-        function fockdiag = GetFockDiag(obj)
-            fockdiag = - obj.imuAmuVecBasis;
-            gammaijdiag = diag(obj.gammaij);
-            fockdiag = fockdiag - (obj.indoF0CoefficientVecBasis.*gammaijdiag ...
-                +obj.indoG1CoefficientVecBasis.*obj.indoG1VecBasis...
-                +obj.indoF2CoefficientVecBasis.*obj.indoF2VecBasis);
-            
-            F2Mat = diag(obj.indoF2VecShell);
-            F2Mat = F2Mat(obj.mapBasis2Shell, obj.mapBasis2Shell);
-            F2MatDiag = diag(diag(F2Mat));
-            F2MatOffDiag = F2Mat - F2MatDiag;
-            G1Mat = diag(obj.indoG1VecAtom);
-            G1Mat = G1Mat(obj.mapShell2Atom, obj.mapShell2Atom);
-            G1Mat = G1Mat - diag(diag(G1Mat));
-            G1Mat = G1Mat(obj.mapBasis2Shell, obj.mapBasis2Shell);
-            gammaSemiDiag = diag(diag(obj.gammaAB));
-            gammaSemiDiag = gammaSemiDiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
-            couMat = gammaSemiDiag + 4/25 .* F2MatDiag - 2/25 .* F2MatOffDiag;
-            excMat = 1/3 .* G1Mat + 3/25 .* F2MatOffDiag + diag(diag(couMat));
-            
-            diagDens = diag(obj.orbitalElectronPopulation);
-            fockdiag = fockdiag + (couMat - 0.5.*excMat) * diagDens;
-            
-            temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
-            temp = (obj.gammaAB - diag(diag(obj.gammaAB))) * temp;
-            fockdiag = fockdiag + temp(obj.mapBasis2Atom);
-            
-        end
-        
         function value = GetFockOffDiagElement(obj, atomA, atomB, mu, nu, isGuess)
             indexAtomA = atomA.index;
             indexAtomB = atomB.index;
@@ -165,7 +166,60 @@ classdef Indo < Cndo2
             end
         end
         
-        % GetGuessFockDiag and GetGuessFockOffDiag same as cndo/2
+        function fockdiag = GetFockDiag(obj)
+            fockdiag = - obj.imuAmuVecBasis;
+            gammaijdiag = diag(obj.gammaij);
+            fockdiag = fockdiag - (obj.indoF0CoefficientVecBasis.*gammaijdiag ...
+                +obj.indoG1CoefficientVecBasis.*obj.indoG1VecBasis...
+                +obj.indoF2CoefficientVecBasis.*obj.indoF2VecBasis);
+            
+            diagDens = diag(obj.orbitalElectronPopulation);
+            fockdiag = fockdiag + (obj.indoCoulombMat - 0.5.*obj.indoExchangeMat) * diagDens;
+            
+            temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
+            temp = (obj.gammaAB - diag(diag(obj.gammaAB))) * temp;
+            fockdiag = fockdiag + temp(obj.mapBasis2Atom);
+        end
+        
+        function offdiagFock = GetFockOffDiag(obj)
+            offdiagFock = obj.gammaEC .* obj.orbitalElectronPopulation + obj.betaS;
+            offdiagFock = offdiagFock - diag(diag(offdiagFock));
+        end
+        
+        function fullH1 = GetH1(obj)
+            % diagonal part
+            diagH1 = - obj.imuAmuVecBasis...
+                - (obj.indoF0CoefficientVecBasis.*diag(obj.gammaij)...
+                +obj.indoG1CoefficientVecBasis.*obj.indoG1VecBasis...
+                +obj.indoF2CoefficientVecBasis.*obj.indoF2VecBasis);
+            
+            temp = (obj.gammaAB - diag(diag(obj.gammaAB))) * (-obj.coreChargeVecAtom);
+            diagH1 = diagH1 + temp(obj.mapBasis2Atom);
+            
+            % off diagonal part
+            fullH1 = obj.betaS; % betaS already has diagonal terms = 0
+            
+            % full H1
+            fullH1 = fullH1 + diag(diagH1);
+        end
+        
+        function fullG = GetG(obj)
+            % diagonal part
+            diagG = (obj.indoCoulombMat - 0.5.*obj.indoExchangeMat)...
+                * diag(obj.orbitalElectronPopulation);
+            temp = (obj.gammaAB - diag(diag(obj.gammaAB)))... % zero out gammAB's diagonal
+                * obj.atomicElectronPopulation;
+            diagG = diagG + temp(obj.mapBasis2Atom);
+            
+            % off diagonal part
+            fullG = obj.gammaEC .* obj.orbitalElectronPopulation;
+            fullG = fullG - diag(diag(fullG));
+            
+            % full G
+            fullG = fullG + diag(diagG);
+        end
+        
+        % GetGuessH1() same as cndo/2
 
         function value = GetMolecularIntegralElement(obj, moI, moJ, moK, moL)
             

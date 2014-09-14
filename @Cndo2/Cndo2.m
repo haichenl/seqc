@@ -296,7 +296,7 @@ classdef Cndo2 < handle
                 
                 % SCF fails
                 if(iterationStep==maxIterationsSCF-1)
-%                     throw(MException('Cndo2:DoSCF', 'SCF not converged.'));
+                    % throw(MException('Cndo2:DoSCF', 'SCF not converged.'));
                     disp('SCF not converged.');
                     obj.elecSCFEnergy = 0;
                 end
@@ -321,9 +321,6 @@ classdef Cndo2 < handle
         %                                                              double const* const* overlapSingletSDs,
         %                                                              const MolDS_base::ElectronicStructure& lhsElectronicStructure)
         
-%         function res = GetEnumTheory(obj)
-%             res = obj.theory;
-%         end
         
     end
     
@@ -1820,7 +1817,7 @@ classdef Cndo2 < handle
         end
         
         function fockMatrix = CalcFockMatrix(obj)
-            if(obj.theory == EnumTheory.CNDO2)
+            if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO)
                 fockMatrix = obj.h1Matrix + obj.GetG();
             else
                 fockMatrix = obj.CalcFockMatrixOld(false);
@@ -1857,7 +1854,7 @@ classdef Cndo2 < handle
         end
         
         function h1Matrix = CalcH1Matrix(obj)
-            if(obj.theory == EnumTheory.CNDO2)
+            if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO)
                 h1Matrix = obj.GetH1();
             else
             bkupOrbitalElectronPopulation = obj.orbitalElectronPopulation;
