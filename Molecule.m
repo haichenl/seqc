@@ -9,6 +9,7 @@ classdef Molecule < handle
         distanceAtoms;    % distance between each atom;
         distanceEpcs;     % distance between each environmental point charge;
         distanceAtomsEpcs;% distance between each atom and environmental point charge;
+        totalNumberShells;
         totalNumberAOs;
         totalNumberValenceElectrons;
         totalCoreMass;
@@ -40,6 +41,7 @@ classdef Molecule < handle
         
         function CalcBasics(obj)
             obj.CalcTotalNumberAOs();
+            obj.CalcTotalNumberShells();
             obj.CalcTotalNumberValenceElectrons();
             obj.CalcTotalCoreMass();
             obj.CalcBasicsConfiguration();
@@ -112,6 +114,14 @@ classdef Molecule < handle
             for i = 1:length(obj.atomVect)
                 obj.atomVect{i}.SetFirstAOIndex(obj.totalNumberAOs + 1);
                 obj.totalNumberAOs = obj.totalNumberAOs + obj.atomVect{i}.GetValenceSize();
+            end
+        end
+        
+        function CalcTotalNumberShells(obj)
+            obj.totalNumberShells = 0; 
+            for i = 1:length(obj.atomVect)
+                obj.atomVect{i}.SetFirstShellIndex(obj.totalNumberShells + 1);
+                obj.totalNumberShells = obj.totalNumberShells + obj.atomVect{i}.nShell;
             end
         end
         

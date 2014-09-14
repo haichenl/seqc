@@ -18,6 +18,7 @@ classdef AtomS < Atom
                 obj.lVec(i) = obj.realSphericalHarmonicsIndices{i}.l;
                 obj.mVec(i) = obj.realSphericalHarmonicsIndices{i}.m;
             end
+            obj.nShell = 3;
         end
         
         function Unset_d_orbitals(obj)
@@ -27,6 +28,7 @@ classdef AtomS < Atom
                 obj.lVec = obj.lVec(1:4);
                 obj.mVec = obj.mVec(1:4);
             end
+            obj.nShell = 2;
         end
         
     end
@@ -40,6 +42,7 @@ classdef AtomS < Atom
             obj.numberValenceElectrons = 6;
 %             obj.valenceShellType = mShell;
             obj.valenceShellType = 3;
+            obj.nShell = 2;
 %             obj.valence(1) = EnumOrbital.s;
 %             obj.valence(2) = EnumOrbital.py;
 %             obj.valence(3) = EnumOrbital.pz;

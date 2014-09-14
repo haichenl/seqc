@@ -18,6 +18,7 @@ classdef AtomC < Atom
             obj.numberValenceElectrons = 4;
 %             obj.valenceShellType = EnumShell.lShell;
             obj.valenceShellType = 2;
+            obj.nShell = 2;
             obj.valence = (1:4)';
             obj.lVec = zeros(length(obj.valence), 1);
             obj.mVec = zeros(length(obj.valence), 1);

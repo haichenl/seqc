@@ -41,9 +41,13 @@ classdef Cndo2 < handle
         matrixForce;
         
         natom;
+        nshell;
         nbf;
+        mapShell2Atom;
+        mapShell2AngularType
         mapBasis2Atom;
         mapBasis2AngularType;
+        mapBasis2Shell
         gammaij;
         coreChargeVecAtom;
         coreChargeVecBasis;
@@ -151,21 +155,40 @@ classdef Cndo2 < handle
             obj.coreChargeVecAtom = zeros(obj.natom, 1);
             obj.mapBasis2Atom = zeros(obj.nbf,1);
             valenceShellTypeVecAtom = zeros(obj.natom, 1);
+            obj.nshell = obj.molecule.totalNumberShells;
+            obj.mapShell2Atom = zeros(obj.nshell, 1);
             for i = 1:obj.natom
                 atom = obj.molecule.atomVect{i};
                 ind = atom.GetFirstAOIndex():atom.GetLastAOIndex();
                 obj.mapBasis2Atom(ind) = i;
+                ind2 = atom.GetFirstShellIndex():atom.GetLastShellIndex();
+                obj.mapShell2Atom(ind2) = i;
                 obj.coreChargeVecAtom(i) = atom.coreCharge;
                 valenceShellTypeVecAtom(i) = atom.valenceShellType;
             end
             obj.coreChargeVecBasis = obj.coreChargeVecAtom(obj.mapBasis2Atom);
             
-            tempK = double(valenceShellTypeVecAtom<3);
-            tempK = tempK*tempK';
-            tempK2 = tempK;
-            tempK2(tempK==1) = obj.bondingAdjustParameterK(1);
-            tempK2(tempK==0) = obj.bondingAdjustParameterK(2);
-            obj.bondParamKMat = tempK2;
+            obj.mapShell2AngularType = zeros(obj.nshell, 1);
+            obj.mapBasis2Shell = zeros(obj.nbf, 1);
+            start = 0;
+            for i = 1:obj.nshell
+                atom = obj.molecule.atomVect{obj.mapShell2Atom(i)};
+                shell = i-atom.firstShellIndex+1;
+                if(shell == 1) % s
+                    obj.mapShell2AngularType(i) = 1;
+                    ind = 1;
+                elseif(shell == 2) % py pz px
+                    obj.mapShell2AngularType(i) = 2;
+                    ind = 1:3;
+                elseif(shell == 3) % dxy dyz dzz dzx dxxyy
+                    obj.mapShell2AngularType(i) = 3;
+                    ind = 1:5;
+                else
+                    throw(MException('Cndo2:SetMolecule', 'Shell type wrong.'));
+                end
+                obj.mapBasis2Shell(start+ind) = i;
+                start = start + length(ind);
+            end
             
             obj.mapBasis2AngularType = zeros(obj.nbf,1);
             for i = 1:obj.nbf
@@ -185,6 +208,14 @@ classdef Cndo2 < handle
                     throw(MException('Cndo2:SetMolecule', 'Orbital type wrong.'));
                 end
             end
+            
+            
+            tempK = double(valenceShellTypeVecAtom<3);
+            tempK = tempK*tempK';
+            tempK2 = tempK;
+            tempK2(tempK==1) = obj.bondingAdjustParameterK(1);
+            tempK2(tempK==0) = obj.bondingAdjustParameterK(2);
+            obj.bondParamKMat = tempK2;
             
         end
         
@@ -296,7 +327,7 @@ classdef Cndo2 < handle
         
     end
     
-    methods (Access = protected)
+    methods %(Access = protected)
         
         function SetEnableAtomTypes(obj)
             obj.enableAtomTypes = {};
@@ -841,39 +872,72 @@ classdef Cndo2 < handle
         end
         
         % fully vectorized version
-        function fockdiag = GetGuessFockDiag(obj)
-            fockdiag = - obj.imuAmuVecBasis;
-        end
-        
-        function fockoffdiag = GetGuessFockOffDiag(obj)
-            fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
-            fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
-            fockoffdiag = fockoffdiag .* obj.overlapAOs;
-            fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
-        end
-        
         function fockdiag = GetFockDiag(obj)
             fockdiag = - obj.imuAmuVecBasis;
             gammaijdiag = diag(obj.gammaij);
-            fockdiag = fockdiag - (obj.coreChargeVecBasis - 0.5) .* gammaijdiag;
+            fockdiag = fockdiag - (obj.coreChargeVecBasis - 0.5) .* gammaijdiag; % H1 to this point
+            
             temp = obj.atomicElectronPopulation(obj.mapBasis2Atom) - 0.5 .* diag(obj.orbitalElectronPopulation);
             fockdiag = fockdiag + temp .* gammaijdiag;
-            
-            diagZeroGammaAB = obj.gammaAB;
-            diagZeroGammaAB = diagZeroGammaAB - diag(diag(diagZeroGammaAB));
-            
             temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
-            temp = temp(:,ones(1,obj.natom));
-            temp = sum(temp .* diagZeroGammaAB, 1)';
+            temp = (obj.gammaAB - diag(diag(obj.gammaAB))) * temp;
             fockdiag = fockdiag + temp(obj.mapBasis2Atom);
         end
         
         function fockoffdiag = GetFockOffDiag(obj)
             fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
             fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
-            fockoffdiag = fockoffdiag .* obj.overlapAOs;
+            fockoffdiag = fockoffdiag .* obj.overlapAOs; % H1 to this point
+            
             fockoffdiag = fockoffdiag - 0.5 .* obj.orbitalElectronPopulation .* obj.gammaij;
             fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
+        end
+        
+        function fullH1 = GetGuessH1(obj)
+            % diagonal part
+            diagH1 = - obj.imuAmuVecBasis;
+            
+            % off diagonal part -- duplicated with below
+            fullH1 = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            fullH1 = fullH1(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            fullH1 = fullH1 .* obj.overlapAOs;
+            fullH1 = fullH1 - diag(diag(fullH1));
+            
+            % full H1
+            fullH1 = fullH1 + diag(diagH1);
+        end
+        
+        function fullH1 = GetH1(obj)
+            % diagonal part
+            diagH1 = - obj.imuAmuVecBasis - (obj.coreChargeVecBasis - 0.5) .* diag(obj.gammaij);
+            temp = (obj.gammaAB - diag(diag(obj.gammaAB))) * (-obj.coreChargeVecAtom);
+            diagH1 = diagH1 + temp(obj.mapBasis2Atom);
+            
+            % off diagonal part
+            fullH1 = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            fullH1 = fullH1(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            fullH1 = fullH1 .* obj.overlapAOs;
+            fullH1 = fullH1 - diag(diag(fullH1));
+            
+            % full H1
+            fullH1 = fullH1 + diag(diagH1);
+        end
+        
+        function fullG = GetG(obj)
+            % diagonal part
+            diagG = obj.atomicElectronPopulation(obj.mapBasis2Atom)...
+                - 0.5 .* diag(obj.orbitalElectronPopulation);
+            diagG = diagG .* diag(obj.gammaij);
+            temp = (obj.gammaAB - diag(diag(obj.gammaAB)))... % zero out gammAB's diagonal
+                * obj.atomicElectronPopulation;
+            diagG = diagG + temp(obj.mapBasis2Atom);
+            
+            % off diagonal part
+            fullG = - 0.5 .* obj.orbitalElectronPopulation .* obj.gammaij;
+            fullG = fullG - diag(diag(fullG));
+            
+            % full G
+            fullG = fullG + diag(diagG);
         end
         
         %    void TransposeFockMatrixMatrix(double** transposedFockMatrix) const;
@@ -1748,9 +1812,8 @@ classdef Cndo2 < handle
             axisA)
         
         function guessFock = CalcGuessFock(obj)
-            if(obj.theory == EnumTheory.CNDO2)
-                guessFock = diag(obj.GetGuessFockDiag()) + obj.GetGuessFockOffDiag();
-                return;
+            if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO)
+                guessFock = obj.GetGuessH1();
             else
                 guessFock = obj.CalcFockMatrixOld(true);
             end
@@ -1758,8 +1821,7 @@ classdef Cndo2 < handle
         
         function fockMatrix = CalcFockMatrix(obj)
             if(obj.theory == EnumTheory.CNDO2)
-                fockMatrix = diag(obj.GetFockDiag()) + obj.GetFockOffDiag();
-                return;
+                fockMatrix = obj.h1Matrix + obj.GetG();
             else
                 fockMatrix = obj.CalcFockMatrixOld(false);
             end
@@ -1795,6 +1857,9 @@ classdef Cndo2 < handle
         end
         
         function h1Matrix = CalcH1Matrix(obj)
+            if(obj.theory == EnumTheory.CNDO2)
+                h1Matrix = obj.GetH1();
+            else
             bkupOrbitalElectronPopulation = obj.orbitalElectronPopulation;
             bkupAtomicElectronPopulation = obj.atomicElectronPopulation;
             obj.orbitalElectronPopulation = zeros(size(obj.orbitalElectronPopulation));
@@ -1802,6 +1867,7 @@ classdef Cndo2 < handle
             h1Matrix = obj.CalcFockMatrix();
             obj.orbitalElectronPopulation = bkupOrbitalElectronPopulation;
             obj.atomicElectronPopulation = bkupAtomicElectronPopulation;
+            end
         end
         
         function res = RotateDiatmicOverlapAOsToSpaceFrame(~, diatomicOverlapAOs, rotatingMatrix)

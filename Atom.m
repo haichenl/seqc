@@ -12,7 +12,10 @@ classdef (Abstract) Atom < handle
         lVec;
         mVec;
         
+        nShell;
+        
         valenceShellType;
+        firstShellIndex;
         firstAOIndex;
         numberValenceElectrons;
         vdWCoefficient;
@@ -56,6 +59,16 @@ classdef (Abstract) Atom < handle
         
         function SetCoreCharge(obj, charge)
             obj.coreCharge = charge;
+        end
+        
+        function SetFirstShellIndex(obj, firstShellIndex_in)
+            obj.firstShellIndex = firstShellIndex_in;
+        end
+        function res = GetFirstShellIndex(obj)
+            res = obj.firstShellIndex;
+        end
+        function res = GetLastShellIndex(obj)
+            res = obj.firstShellIndex + obj.nShell - 1;
         end
         
         function SetFirstAOIndex(obj, firstAOIndex_in)

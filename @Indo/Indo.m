@@ -1,5 +1,19 @@
 classdef Indo < Cndo2
     
+    properties (SetAccess = private)
+        
+        indoG1VecAtom;
+        indoF2VecAtom;
+        indoG1VecShell;
+        indoF2VecShell;
+        indoG1VecBasis;
+        indoF2VecBasis;
+        indoF0CoefficientVecBasis;
+        indoG1CoefficientVecBasis;
+        indoF2CoefficientVecBasis;
+        
+    end
+    
     methods (Access = public)
         
         function obj = Indo()
@@ -7,9 +21,31 @@ classdef Indo < Cndo2
             obj.SetEnableAtomTypes();
         end
         
+        function SetMolecule(obj, mol)
+            SetMolecule@Cndo2(obj, mol);
+            obj.indoF0CoefficientVecBasis = zeros(obj.nbf, 1);
+            obj.indoG1CoefficientVecBasis = zeros(obj.nbf, 1);
+            obj.indoF2CoefficientVecBasis = zeros(obj.nbf, 1);
+            for i = 1:obj.nbf
+                angularType = obj.mapBasis2AngularType(i);
+                atom = obj.molecule.atomVect{obj.mapBasis2Atom(i)};
+                if(angularType == 1) % s
+                    obj.indoF0CoefficientVecBasis(i) = atom.paramPool.indoF0CoefficientS;
+                    obj.indoG1CoefficientVecBasis(i) = atom.paramPool.indoG1CoefficientS;
+                    obj.indoF2CoefficientVecBasis(i) = atom.paramPool.indoF2CoefficientS;
+                elseif(angularType == 2) % py pz px
+                    obj.indoF0CoefficientVecBasis(i) = atom.paramPool.indoF0CoefficientP;
+                    obj.indoG1CoefficientVecBasis(i) = atom.paramPool.indoG1CoefficientP;
+                    obj.indoF2CoefficientVecBasis(i) = atom.paramPool.indoF2CoefficientP;
+                else
+                    throw(MException('Indo:Preiterations', 'Angular type wrong.'));
+                end
+            end
+        end
+        
     end
     
-    methods (Access = protected)
+    methods %(Access = protected)
         
         function SetEnableAtomTypes(obj)
             obj.enableAtomTypes = {};
@@ -25,6 +61,27 @@ classdef Indo < Cndo2
         
         % generate protected vectorization stuffs
         function Preiterations(obj)
+            Preiterations@Cndo2(obj);
+            obj.indoF2VecShell = zeros(obj.nshell, 1);
+            for i = 1:obj.nshell
+                atom = obj.molecule.atomVect{obj.mapShell2Atom(i)};
+                if(obj.mapShell2AngularType(i) == 1) % s
+                    valueF2 = 0;
+                else
+                    valueF2 = atom.paramPool.indoF2;
+                end
+                obj.indoF2VecShell(i) = valueF2;
+            end
+            obj.indoG1VecAtom = zeros(obj.natom, 1);
+            obj.indoF2VecAtom = zeros(obj.natom, 1);
+            for i = 1:obj.natom
+                atom = obj.molecule.atomVect{i};
+                obj.indoG1VecAtom(i) = atom.paramPool.indoG1;
+                obj.indoF2VecAtom(i) = atom.paramPool.indoF2;
+            end
+            obj.indoG1VecShell = obj.indoG1VecAtom(obj.mapShell2Atom);
+            obj.indoG1VecBasis = obj.indoG1VecAtom(obj.mapBasis2Atom);
+            obj.indoF2VecBasis = obj.indoF2VecAtom(obj.mapBasis2Atom);
         end
         
         function value = GetFockDiagElement(obj, atomA, mu, isGuess)
@@ -57,6 +114,35 @@ classdef Indo < Cndo2
             end
         end
         
+        function fockdiag = GetFockDiag(obj)
+            fockdiag = - obj.imuAmuVecBasis;
+            gammaijdiag = diag(obj.gammaij);
+            fockdiag = fockdiag - (obj.indoF0CoefficientVecBasis.*gammaijdiag ...
+                +obj.indoG1CoefficientVecBasis.*obj.indoG1VecBasis...
+                +obj.indoF2CoefficientVecBasis.*obj.indoF2VecBasis);
+            
+            F2Mat = diag(obj.indoF2VecShell);
+            F2Mat = F2Mat(obj.mapBasis2Shell, obj.mapBasis2Shell);
+            F2MatDiag = diag(diag(F2Mat));
+            F2MatOffDiag = F2Mat - F2MatDiag;
+            G1Mat = diag(obj.indoG1VecAtom);
+            G1Mat = G1Mat(obj.mapShell2Atom, obj.mapShell2Atom);
+            G1Mat = G1Mat - diag(diag(G1Mat));
+            G1Mat = G1Mat(obj.mapBasis2Shell, obj.mapBasis2Shell);
+            gammaSemiDiag = diag(diag(obj.gammaAB));
+            gammaSemiDiag = gammaSemiDiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            couMat = gammaSemiDiag + 4/25 .* F2MatDiag - 2/25 .* F2MatOffDiag;
+            excMat = 1/3 .* G1Mat + 3/25 .* F2MatOffDiag + diag(diag(couMat));
+            
+            diagDens = diag(obj.orbitalElectronPopulation);
+            fockdiag = fockdiag + (couMat - 0.5.*excMat) * diagDens;
+            
+            temp = obj.atomicElectronPopulation - obj.coreChargeVecAtom;
+            temp = (obj.gammaAB - diag(diag(obj.gammaAB))) * temp;
+            fockdiag = fockdiag + temp(obj.mapBasis2Atom);
+            
+        end
+        
         function value = GetFockOffDiagElement(obj, atomA, atomB, mu, nu, isGuess)
             indexAtomA = atomA.index;
             indexAtomB = atomB.index;
@@ -78,6 +164,8 @@ classdef Indo < Cndo2
                 end
             end
         end
+        
+        % GetGuessFockDiag and GetGuessFockOffDiag same as cndo/2
 
         function value = GetMolecularIntegralElement(obj, moI, moJ, moK, moL)
             
@@ -146,7 +234,7 @@ classdef Indo < Cndo2
 
     end
     
-    methods (Access = private)
+    methods %(Access = private)
         
         % (3.87) - (3.91) in J. A. Pople book.
         % Indo Coulomb Interaction

@@ -18,6 +18,7 @@ classdef AtomH < Atom
             obj.numberValenceElectrons = 1;
 %             obj.valenceShellType = EnumShell.kShell;
             obj.valenceShellType = 1;
+            obj.nShell = 1;
             obj.valence = 1;
             obj.lVec = zeros(length(obj.valence), 1);
             obj.mVec = zeros(length(obj.valence), 1);

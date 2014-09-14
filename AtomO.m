@@ -17,6 +17,7 @@ classdef AtomO < Atom
             obj.coreCharge = 6.0;
             obj.numberValenceElectrons = 6;
             obj.valenceShellType = 2; % lShell
+            obj.nShell = 2;
             obj.valence = (1:4)';
             obj.lVec = zeros(length(obj.valence), 1);
             obj.mVec = zeros(length(obj.valence), 1);
