@@ -327,20 +327,16 @@ classdef Cndo2 < handle
             obj.bondParamMatAtom = obj.bondParamMatAtom + obj.bondParamMatAtom';
             obj.imuAmuVecBasis = zeros(obj.nbf,1);
             for i = 1:obj.nbf
+                angularType = obj.mapBasis2AngularType(i);
                 atom = obj.molecule.atomVect{obj.mapBasis2Atom(i)};
-                orbital = atom.valence(i-atom.firstAOIndex+1);
-                if(orbital == 1) % s
+                if(angularType == 1) % s
                     obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuS;
-                elseif(orbital == 4 || orbital == 2 || orbital == 3) % py pz px
+                elseif(angularType == 2) % py pz px
                     obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuP;
-                elseif(orbital == 5 || ...
-                        orbital == 6 || ...
-                        orbital == 7 || ...
-                        orbital == 8 || ...
-                        orbital == 9 ) % dxy dyz dzz dzx dxxyy
+                elseif(angularType == 3) % dxy dyz dzz dzx dxxyy
                     obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuD;
                 else
-                    throw(MException('Cndo2:AtomGetCoreIntegral', 'Orbital type wrong.'));
+                    throw(MException('Cndo2:Preiterations', 'Angular type wrong.'));
                 end
             end
         end
@@ -500,8 +496,8 @@ classdef Cndo2 < handle
                     for j = 0:J-1
                         temp = obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1);
                         if(0<abs(temp))
-                            temp = temp .* obj.GetAuxiliaryA(i, 0.5*(alpha+beta));
-                            temp = temp .* obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
+                            temp = temp .* obj.GetAuxiliaryA(i+1, 0.5*(alpha+beta));
+                            temp = temp .* obj.GetAuxiliaryB(j+1, 0.5*(alpha-beta));
                             value = value + temp;
                         end
                     end
@@ -516,8 +512,8 @@ classdef Cndo2 < handle
                 for k = 0:na+nb
                     temp = obj.ReducedOverlapAOsParameters_Z(na+1,nb+1,k+1);
                     if(0<abs(temp))
-                        temp = temp .* obj.GetAuxiliaryA(k, 0.5*(alpha+beta));
-                        temp = temp .* obj.GetAuxiliaryB(na+nb-k, 0.5*(alpha-beta));
+                        temp = temp .* obj.GetAuxiliaryA(k+1, 0.5*(alpha+beta));
+                        temp = temp .* obj.GetAuxiliaryB(na+nb-k+1, 0.5*(alpha-beta));
                         value = value + temp;
                     end
                 end
@@ -527,28 +523,30 @@ classdef Cndo2 < handle
             end
         end
         
+        % vectorized
         function value = GetReducedOverlapAOsZ(obj, na, nb, alpha, beta)
             auxAVec = zeros(na+nb+1,1);
             auxBVec = zeros(na+nb+1,1);
             tmp1 = 0.5*(alpha+beta);
             tmp2 = 0.5*(alpha-beta);
             for k = 1:na+nb+1
-                auxAVec(k) = obj.GetAuxiliaryA(k-1, tmp1);
-                auxBVec(k) = obj.GetAuxiliaryB(na+nb-k+1, tmp2);
+                auxAVec(k) = obj.GetAuxiliaryA(k, tmp1);
+                auxBVec(k) = obj.GetAuxiliaryB(na+nb-k+2, tmp2);
             end
             temp = reshape(obj.ReducedOverlapAOsParameters_Z(na+1,nb+1,1:na+nb+1), [], 1);
             value = sum(temp.*auxAVec.*auxBVec);
             value = value .* 0.5;
         end
         
+        % vectorized
         function value = GetReducedOverlapAOsY(obj, na, la, m, nb, lb, alpha, beta)
             auxAVec = zeros(9,1);
             auxBVec = zeros(9,1);
             tmp1 = 0.5*(alpha+beta);
             tmp2 = 0.5*(alpha-beta);
             for i = 1:9
-                auxAVec(i) = obj.GetAuxiliaryA(i-1, tmp1);
-                auxBVec(i) = obj.GetAuxiliaryB(i-1, tmp2);
+                auxAVec(i) = obj.GetAuxiliaryA(i, tmp1);
+                auxBVec(i) = obj.GetAuxiliaryB(i, tmp2);
             end
             temp = reshape(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,1:9,1:9), 9, 9);
             auxMat = auxAVec * auxBVec';
@@ -568,8 +566,8 @@ classdef Cndo2 < handle
                 for j = 0:J-1
                     if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
-                            *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
-                        temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
+                            *obj.GetAuxiliaryB(j+1, 0.5*(alpha-beta));
+                        temp2 = obj.GetAuxiliaryA(i+1, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
                         value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 + temp2);
                     end
@@ -588,8 +586,8 @@ classdef Cndo2 < handle
                 for j = 0:J-1
                     if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
-                            *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
-                        temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
+                            *obj.GetAuxiliaryB(j+1, 0.5*(alpha-beta));
+                        temp2 = obj.GetAuxiliaryA(i+1, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
                         value = value + obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 - temp2);
                     end
@@ -608,8 +606,8 @@ classdef Cndo2 < handle
                 for j = 0:J-1
                     if(0e0<fabs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA2ndDerivative(i, 0.5*(alpha+beta))...
-                            *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
-                        temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
+                            *obj.GetAuxiliaryB(j+1, 0.5*(alpha-beta));
+                        temp2 = obj.GetAuxiliaryA(i+1, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB2ndDerivative(j, 0.5*(alpha-beta));
                         temp3 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
@@ -630,8 +628,8 @@ classdef Cndo2 < handle
                 for j = 0:J-1
                     if(0e0<abs(obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA2ndDerivative(i, 0.5*(alpha+beta))...
-                            *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
-                        temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
+                            *obj.GetAuxiliaryB(j+1, 0.5*(alpha-beta));
+                        temp2 = obj.GetAuxiliaryA(i+1, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB2ndDerivative(j, 0.5*(alpha-beta));
                         temp3 = obj.GetAuxiliaryA1stDerivative(i, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB1stDerivative(j, 0.5*(alpha-beta));
@@ -653,8 +651,8 @@ classdef Cndo2 < handle
                 for j = 0:J-1
                     if(0e0<abs(obj.ReducedOverlapAOsParameters.Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)))
                         temp1 = obj.GetAuxiliaryA2ndDerivative(i, 0.5*(alpha+beta))...
-                            *obj.GetAuxiliaryB(j, 0.5*(alpha-beta));
-                        temp2 = obj.GetAuxiliaryA(i, 0.5*(alpha+beta))...
+                            *obj.GetAuxiliaryB(j+1, 0.5*(alpha-beta));
+                        temp2 = obj.GetAuxiliaryA(i+1, 0.5*(alpha+beta))...
                             *obj.GetAuxiliaryB2ndDerivative(j, 0.5*(alpha-beta));
                         value = value + obj.ReducedOverlapAOsParameters.Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1)*(temp1 - temp2);
                     end
@@ -843,6 +841,17 @@ classdef Cndo2 < handle
         end
         
         % fully vectorized version
+        function fockdiag = GetGuessFockDiag(obj)
+            fockdiag = - obj.imuAmuVecBasis;
+        end
+        
+        function fockoffdiag = GetGuessFockOffDiag(obj)
+            fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
+            fockoffdiag = fockoffdiag .* obj.overlapAOs;
+            fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
+        end
+        
         function fockdiag = GetFockDiag(obj)
             fockdiag = - obj.imuAmuVecBasis;
             gammaijdiag = diag(obj.gammaij);
@@ -1489,7 +1498,7 @@ classdef Cndo2 < handle
         
     end
     
-    methods (Access = private)
+    methods %(Access = private)
         
         function CalcCoreRepulsionEnergy(obj)
             energy = 0.0;
@@ -1740,12 +1749,7 @@ classdef Cndo2 < handle
         
         function guessFock = CalcGuessFock(obj)
             if(obj.theory == EnumTheory.CNDO2)
-                fockdiag = - obj.imuAmuVecBasis;
-                fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
-                fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
-                fockoffdiag = fockoffdiag .* obj.overlapAOs;
-                fockoffdiag = fockoffdiag - diag(diag(fockoffdiag));
-                guessFock = diag(fockdiag) + fockoffdiag;
+                guessFock = diag(obj.GetGuessFockDiag()) + obj.GetGuessFockOffDiag();
                 return;
             else
                 guessFock = obj.CalcFockMatrixOld(true);
@@ -1829,7 +1833,7 @@ classdef Cndo2 < handle
             tmp1 = 1/rho;
             tmp2 = rho;
             product = 1;
-            for mu = 0:k-1
+            for mu = 1:k-1
                 tmp2 = tmp2.*rho; % tmp2 = pow(rho,mu)
                 product = product .* (k-mu); % product = k!/(k-mu+1)!
                 tmp1 = tmp1 + product/tmp2;
@@ -1840,10 +1844,10 @@ classdef Cndo2 < handle
         function value = GetAuxiliaryB(~, k, rho)
             if(rho~=0)
                 tmp1 = 1/rho;
-                tmp2 = tmp1 .* (-1.0)^(k+1);
+                tmp2 = tmp1 .* (-1.0)^(k);
                 tmp3 = rho;
                 product = 1;
-                for mu = 0:k-1
+                for mu = 1:k-1
                     tmp3 = tmp3.*rho; % tmp3 = pow(rho,mu)
                     product = product .* (k-mu); % product = k!/(k-mu+1)!
                     prodtmp = product ./ tmp3;
@@ -1852,8 +1856,8 @@ classdef Cndo2 < handle
                 end
                 value = -exp(-rho).*tmp1 - exp(rho).*tmp2;
             else
-                if(mod(k,2) == 0)
-                    value = 2.0/(1.0+k);
+                if(mod(k,2) ~= 0)
+                    value = 2.0/(k);
                 else
                     value = 0;
                 end
@@ -1864,11 +1868,11 @@ classdef Cndo2 < handle
             if(m<0)
                 throw(MException('Cndo2:GetAuxiliaryD', 'm < 0'));
             end
-            tmp = CachedFactorial(m+1)/8.0;
-            pre = tmp*tmp;
+            value = CachedFactorial(m+1)/8.0;
+            value = value.^2;
             termA = ( (2.0*la+1.0)*CachedFactorial(la-m) ) / ( 2.0*CachedFactorial(la+m) );
             termB = ( (2.0*lb+1.0)*CachedFactorial(lb-m) ) / ( 2.0*CachedFactorial(lb+m) );
-            value = pre*sqrt(termA)*sqrt(termB);
+            value = value.*sqrt(termA).*sqrt(termB);
         end
         
         % not tested
