@@ -324,7 +324,7 @@ classdef Cndo2 < handle
         
     end
     
-    methods %(Access = protected)
+    methods (Access = protected)
         
         function SetEnableAtomTypes(obj)
             obj.enableAtomTypes = {};
@@ -1559,7 +1559,7 @@ classdef Cndo2 < handle
         
     end
     
-    methods %(Access = private)
+    methods (Access = private)
         
         function CalcCoreRepulsionEnergy(obj)
             energy = 0.0;

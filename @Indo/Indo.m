@@ -50,7 +50,7 @@ classdef Indo < Cndo2
         
     end
     
-    methods %(Access = protected)
+    methods (Access = protected)
         
         function SetEnableAtomTypes(obj)
             obj.enableAtomTypes = {};
@@ -288,7 +288,7 @@ classdef Indo < Cndo2
 
     end
     
-    methods %(Access = private)
+    methods (Access = private)
         
         % (3.87) - (3.91) in J. A. Pople book.
         % Indo Coulomb Interaction

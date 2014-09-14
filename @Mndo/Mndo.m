@@ -20,7 +20,9 @@ classdef Mndo < Indo
             obj.heatsFormation = 0.0;
         end
         
-        %    virtual void SetMolecule(MolDS_base::Molecule* molecule);
+        function SetMolecule(obj, mol)
+            SetMolecule@Cndo2(obj, mol);
+        end
         
     end
     
@@ -36,6 +38,10 @@ classdef Mndo < Indo
             obj.enableAtomTypes{end+1} = EnumAtom.S;
             obj.enableAtomTypes{end+1} = EnumAtom.Cl;
             obj.enableAtomTypes{end+1} = EnumAtom.Zn;
+        end
+        
+        % generate protected vectorization stuffs
+        function Preiterations(obj)
         end
         
         function gammaAB = CalcGammaAB(~)
