@@ -340,6 +340,14 @@ classdef Mndo < Indo
             res = atom.paramPool.mndoDerivedParameterRho(rhoIndex);
         end
         
+        function res = AtomGetNddoDerivedParameterDVec(~, atom)
+            res = atom.paramPool.mndoDerivedParameterD;
+        end
+        
+        function res = AtomGetNddoDerivedParameterRhoVec(~, atom)
+            res = atom.paramPool.mndoDerivedParameterRho;
+        end
+        
     end
     
     methods (Access = private)
@@ -674,7 +682,15 @@ classdef Mndo < Indo
                 for nu = mu:atomA.GetValenceSize()
                     for lambda = 1:atomB.GetValenceSize()
                         for sigma = lambda:atomB.GetValenceSize()
-                            value = obj.GetNddoRepulsionIntegral(...
+%                             value = obj.GetNddoRepulsionIntegral(...
+%                                 atomA, ...
+%                                 atomA.valence(mu),...
+%                                 atomA.valence(nu),...
+%                                 atomB, ...
+%                                 atomB.valence(lambda),...
+%                                 atomB.valence(sigma));...
+%                                 matrix(mu,nu,lambda,sigma) = value;
+                            value = obj.Cpp_GetNddoRepulsionIntegral(...
                                 atomA, ...
                                 atomA.valence(mu),...
                                 atomA.valence(nu),...
@@ -745,6 +761,8 @@ classdef Mndo < Indo
         %                                                                 double*** ptrDiatomic) const;
         
         value = GetNddoRepulsionIntegral(obj, atomA, mu, nu, atomB, lambda, sigma);
+        
+        value = Cpp_GetNddoRepulsionIntegral(obj, atomA, mu, nu, atomB, lambda, sigma);
         
         %    double GetNddoRepulsionIntegral1stDerivative(const MolDS_base_atoms::Atom& atomA,
         %                                                 MolDS_base::OrbitalType mu,
