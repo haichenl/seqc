@@ -236,7 +236,7 @@ classdef Cndo2 < handle
             % end
             obj.overlapAOs = obj.CalcOverlapAOs();
             obj.Preiterations();
-%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
+            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
             obj.CalcTwoElecsTwoCores();
             obj.h1Matrix = obj.CalcH1Matrix();
             
@@ -1691,7 +1691,8 @@ classdef Cndo2 < handle
                         numValenceAOsB = length(atomB.valence);
                         for b = 1:numValenceAOsB
                             nu = firstAOIndexB + b - 1;
-                            cartesianMatrix(mu, nu, :) = obj.CalcCartesianMatrixElementsByGTOExpansion(atomA, a, atomB, b, stonG);
+%                             cartesianMatrix(mu, nu, :) = obj.CalcCartesianMatrixElementsByGTOExpansion(atomA, a, atomB, b, stonG);
+                            cartesianMatrix(mu, nu, :) = obj.Cpp_CalcCartesianMatrixElementsByGTOExpansion(atomA, a, atomB, b, stonG);
                         end
                     end 
                 end
@@ -1742,6 +1743,22 @@ classdef Cndo2 < handle
                     xyz = xyz + temp.*[tempX; tempY; tempZ];
                 end
             end
+        end
+        
+        function xyz = Cpp_CalcCartesianMatrixElementsByGTOExpansion(obj, atomA, valenceIndexA, atomB, valenceIndexB, stonG)
+            shellTypeA = atomA.valenceShellType;
+            shellTypeB = atomB.valenceShellType;
+            valenceOrbitalA = atomA.valence(valenceIndexA);
+            valenceOrbitalB = atomB.valence(valenceIndexB);
+            orbitalExponentA = obj.AtomGetOrbitalExponent(atomA, atomA.valenceShellType, valenceOrbitalA);
+            orbitalExponentB = obj.AtomGetOrbitalExponent(atomB, atomB.valenceShellType, valenceOrbitalB);
+            xyzA = atomA.xyz;
+            xyzB = atomB.xyz;
+            dxyz = xyzA - xyzB;
+            rAB = norm(dxyz);
+            xyz = Cpp_Cndo2CalcCartesianMatrixElementsByGTOExpansionLoop(shellTypeA, valenceOrbitalA, orbitalExponentA, xyzA,...
+                shellTypeB, valenceOrbitalB, orbitalExponentB, xyzB,...
+                rAB, stonG);
         end
         
         value = GetGaussianCartesianMatrix(obj, ...
