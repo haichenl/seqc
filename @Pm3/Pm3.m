@@ -113,6 +113,14 @@ classdef Pm3 < Am1
             res = atom.paramPool.pm3DerivedParameterRho(rhoIndex);
         end
         
+        function res = AtomGetNddoDerivedParameterDVec(~, atom)
+            res = atom.paramPool.pm3DerivedParameterD;
+        end
+        
+        function res = AtomGetNddoDerivedParameterRhoVec(~, atom)
+            res = atom.paramPool.pm3DerivedParameterRho;
+        end
+        
         function res = AtomGetNddoParameterK(~, atom, kIndex)
             if(kIndex == 1 || kIndex == 2 || kIndex == 3 || kIndex == 4)
                 res = atom.paramPool.pm3ParameterK(kIndex);

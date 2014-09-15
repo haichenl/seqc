@@ -145,6 +145,14 @@ classdef Am1 < Mndo
             res = atom.paramPool.am1DerivedParameterRho(rhoIndex);
         end
         
+        function res = AtomGetNddoDerivedParameterDVec(~, atom)
+            res = atom.paramPool.am1DerivedParameterD;
+        end
+        
+        function res = AtomGetNddoDerivedParameterRhoVec(~, atom)
+            res = atom.paramPool.am1DerivedParameterRho;
+        end
+        
         function res = AtomGetNddoParameterK(~, atom, kIndex)
             if(kIndex == 1 || kIndex == 2 || kIndex == 3 || kIndex == 4)
                 res = atom.paramPool.am1ParameterK(kIndex);
