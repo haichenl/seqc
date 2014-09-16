@@ -30,17 +30,17 @@ classdef Am1 < Mndo
             % additional term, Eq. (4) in [S_1989].
             distance   = obj.molecule.GetDistanceAtoms(atomA, atomB);
             ang2AU     = Arguments.GetInstance().GetAngstrom2AU();
-            temp = 0.0;
-            for i = 1:4
-                kA = obj.AtomGetNddoParameterK(atomA, i);
-                lA = obj.AtomGetNddoParameterL(atomA, i);
-                mA = obj.AtomGetNddoParameterM(atomA, i);
-                kB = obj.AtomGetNddoParameterK(atomB, i);
-                lB = obj.AtomGetNddoParameterL(atomB, i);
-                mB = obj.AtomGetNddoParameterM(atomB, i);
-                temp = temp + obj.GetAdditionalDiatomCoreRepulsionTerm(kA, lA, mA, distance);
-                temp = temp + obj.GetAdditionalDiatomCoreRepulsionTerm(kB, lB, mB, distance);
-            end
+            
+            kA = obj.AtomGetNddoParameterKVec(atomA);
+            lA = obj.AtomGetNddoParameterLVec(atomA);
+            mA = obj.AtomGetNddoParameterMVec(atomA);
+            temp = sum(obj.GetAdditionalDiatomCoreRepulsionTerm(kA, lA, mA, distance));
+            
+            kB = obj.AtomGetNddoParameterKVec(atomB);
+            lB = obj.AtomGetNddoParameterLVec(atomB);
+            mB = obj.AtomGetNddoParameterMVec(atomB);
+            temp = temp + sum(obj.GetAdditionalDiatomCoreRepulsionTerm(kB, lB, mB, distance));
+
             additionalTerm = atomA.coreCharge*atomB.coreCharge*temp*ang2AU/distance;
             
             res = mndoTerm + additionalTerm;
@@ -187,20 +187,32 @@ classdef Am1 < Mndo
             end
         end
         
+        function res = AtomGetNddoParameterKVec(~, atom)
+            res = atom.paramPool.am1ParameterK;
+        end
+        
+        function res = AtomGetNddoParameterLVec(~, atom)
+            res = atom.paramPool.am1ParameterL;
+        end
+        
+        function res = AtomGetNddoParameterMVec(~, atom)
+            res = atom.paramPool.am1ParameterM;
+        end
+        
     end
     
     methods (Access = private)
         
         function res = GetAdditionalDiatomCoreRepulsionTerm(~, k, l, m, distance)
-            res =  k*exp(-l*power(distance-m,2.0));
+            res =  k.*exp(-l.*power(distance-m,2.0));
         end
         
         function res =  GetAdditionalDiatomCoreRepulsionTerm1stDerivative(~, k, l, m, distance)
-            res =  -2.0*l*(distance-m)*k*exp(-l*power(distance-m,2.0));
+            res =  -2.0.*l*(distance-m).*k.*exp(-l.*power(distance-m,2.0));
         end
         
         function res = GetAdditionalDiatomCoreRepulsionTerm2ndDerivative(~, k, l, m, distance)
-            res = (-2.0*l + pow(2.0*l*(distance-m),2.0))*k*exp(-l*power(distance-m,2.0));
+            res = (-2.0.*l + power(2.0.*l.*(distance-m),2.0)).*k.*exp(-l.*power(distance-m,2.0));
         end
         
     end

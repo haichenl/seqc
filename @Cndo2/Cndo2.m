@@ -936,12 +936,12 @@ classdef Cndo2 < handle
             rAB = obj.molecule.GetDistanceAtoms(atomA, atomB); % Inter nuclear distance between aton A and B.
             coeff = power(rAB, na+nb+1.0) ./ sqrt(CachedFactorial(2*na)*CachedFactorial(2*nb));
             for a = 1:length(atomA.valence)
-                valenceOrbitalA = atomA.valence(a);
                 realShpericalHarmonicsA = atomA.realSphericalHarmonicsIndices{a};
+                valenceOrbitalA = atomA.valence(a);
                 orbitalExponentA = obj.AtomGetOrbitalExponent(atomA, atomA.valenceShellType, valenceOrbitalA);
                 for b = 1:length(atomB.valence)
-                    valenceOrbitalB = atomB.valence(b);
                     realShpericalHarmonicsB = atomB.realSphericalHarmonicsIndices{b};
+                    valenceOrbitalB = atomB.valence(b);
                     orbitalExponentB = obj.AtomGetOrbitalExponent(atomB, atomB.valenceShellType, valenceOrbitalB);
                     if(realShpericalHarmonicsA.m == realShpericalHarmonicsB.m)
                         m = abs(realShpericalHarmonicsA.m);

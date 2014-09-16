@@ -155,6 +155,18 @@ classdef Pm3 < Am1
             end
         end
         
+        function res = AtomGetNddoParameterKVec(~, atom)
+            res = atom.paramPool.pm3ParameterK;
+        end
+        
+        function res = AtomGetNddoParameterLVec(~, atom)
+            res = atom.paramPool.pm3ParameterL;
+        end
+        
+        function res = AtomGetNddoParameterMVec(~, atom, mIndex)
+            res = atom.paramPool.pm3ParameterM;
+        end
+        
     end
     
 end
