@@ -101,7 +101,7 @@ classdef Indo < Cndo2
             obj.indoCoulombMat = gammaSemiDiag + 4/25 .* F2MatDiag - 2/25 .* F2MatOffDiag;
             obj.indoExchangeMat = 1/3 .* G1Mat + 3/25 .* F2MatOffDiag + diag(diag(obj.indoCoulombMat));
             
-            betaS_ = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            betaS_ = obj.bondParamSumMatAtom .* obj.bondParamKMat .* 0.5;
             betaS_ = betaS_ - diag(diag(betaS_));
             betaS_ = betaS_(obj.mapBasis2Atom, obj.mapBasis2Atom);
             betaS_ = betaS_ .* obj.overlapAOs;

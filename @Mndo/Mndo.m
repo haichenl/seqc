@@ -1,5 +1,14 @@
 classdef Mndo < Indo
     
+    properties (SetAccess = protected)
+        
+        nddoCoreIntVecBasis;
+        bondParamSumMatBasis;
+        nddoCoulombMat;
+        nddoExchangeMat
+        
+    end
+    
     properties (SetAccess = private)
         
         twoElecsTwoAtomCoresMpiBuff;
@@ -42,6 +51,31 @@ classdef Mndo < Indo
         
         % generate protected vectorization stuffs
         function Preiterations(obj)
+            nddoCoreIntVecShell = zeros(obj.nshell, 1);
+            bondParamVecShell = zeros(obj.nshell, 1);
+            for i = 1:obj.natom
+                atom = obj.molecule.atomVect{i};
+                coreIntVec = obj.AtomGetCoreIntegralVec(atom);
+                dimShell = atom.GetFirstShellIndex():atom.GetLastShellIndex();
+                nddoCoreIntVecShell(dimShell) = coreIntVec(1:1+atom.nShell-1);
+                
+                bondParamVec = obj.AtomGetBondingParameterVec(atom);
+                bondParamVecShell(dimShell) = bondParamVec(1:1+atom.nShell-1);
+                
+            end
+            obj.nddoCoreIntVecBasis = nddoCoreIntVecShell(obj.mapBasis2Shell);
+            bondParamMatShell = bondParamVecShell(:,ones(1,obj.nshell));
+            bondParamMatShell = bondParamMatShell + bondParamMatShell';
+            obj.bondParamSumMatBasis = bondParamMatShell(obj.mapBasis2Shell,obj.mapBasis2Shell);
+            obj.bondParamSumMatBasis = obj.bondParamSumMatBasis - diag(diag(obj.bondParamSumMatBasis));
+            
+            for i = 1:obj.natom
+                atom = obj.molecule.atomVect{i};
+                dimBlock = atom.GetFirstAOIndex():atom.GetLastAOIndex();
+                obj.nddoCoulombMat(dimBlock,dimBlock) = obj.GetCoulombIntBlock(atom);
+                obj.nddoExchangeMat(dimBlock,dimBlock) = obj.GetExchangeIntBlock(atom);
+            end
+            
         end
         
         function gammaAB = CalcGammaAB(~)
@@ -117,7 +151,7 @@ classdef Mndo < Indo
                     elecCharge = -1.0;
                     for i = 1:numEpcs
                         epcCharge = obj.molecule.epcVect{i}.coreCharge;
-                        value = value + elecCharge*epcCharge*obj.twoElecsAtomEpcCores(indexAtomA,i,mu,mu,s,s);
+                        value = value + elecCharge*epcCharge*obj.twoElecsAtomEpcCores(indexAtomA,i,mu,mu,1,1);
                     end
                 end
                 
@@ -165,7 +199,7 @@ classdef Mndo < Indo
                         elecCharge = -1.0;
                         for i = 1:numEpcs
                             epcCharge = obj.molecule.epcVect{i}.coreCharge;
-                            value = value + elecCharge*epcCharge*obj.twoElecsAtomEpcCores(indexAtomA,i,mu,nu,s,s);
+                            value = value + elecCharge*epcCharge*obj.twoElecsAtomEpcCores(indexAtomA,i,mu,nu,1,1);
                         end
                     end
                 else
@@ -180,6 +214,67 @@ classdef Mndo < Indo
                 end
                 value = value + temp;
             end
+        end
+        
+        function guessH1 = GetGuessH1(obj)
+            fockDiag = obj.nddoCoreIntVecBasis;
+            guessH1 = 0.5 .* obj.bondParamSumMatBasis .* obj.overlapAOs;
+            guessH1 = guessH1 - diag(diag(guessH1)) + diag(fockDiag);
+        end
+        
+        function fockFull = GetFockFull(obj)
+            marginizer = ones(obj.natom);
+            marginizer = marginizer - diag(diag(marginizer));
+            marginizer = marginizer(obj.mapBasis2Atom,obj.mapBasis2Atom);
+            fockMargin = 0.5 .* marginizer .* obj.bondParamSumMatBasis .* obj.overlapAOs;
+            for A = 1:obj.natom
+                atomA = obj.molecule.atomVect{A};
+                valLengthA = atomA.GetValenceSize();
+                indScaleA = (1:valLengthA)+atomA.firstAOIndex-1;
+                for B = 1:A-1
+                    atomB = obj.molecule.atomVect{B};
+                    valLengthB = atomB.GetValenceSize();
+                    indScaleB = (1:valLengthB)+atomB.firstAOIndex-1;
+                    twoElecsCache = reshape(obj.twoElecsTwoAtomCores(A,B,:,:,:,:), 4,4,4,4);
+                    twoElecsCache = permute(twoElecsCache, [3 2 4 1]);
+                    twoElecsCache = reshape(twoElecsCache, 16, 16);
+                    linedDens = reshape(obj.orbitalElectronPopulation(indScaleA,indScaleB)',[],1);
+                    twoElecsCache = twoElecsCache(1:length(linedDens), 1:length(linedDens));
+                    fockMargin(indScaleB, indScaleA) = fockMargin(indScaleB, indScaleA) - 0.5 .* reshape(twoElecsCache * linedDens, valLengthB, valLengthA);
+                end
+            end
+            fockMargin = triu(fockMargin, +1);
+            fockMargin = fockMargin + fockMargin';
+            
+            fockDiag = obj.nddoCoreIntVecBasis;
+            diagDens = diag(obj.orbitalElectronPopulation);
+            fockDiag = fockDiag + (obj.nddoCoulombMat - 0.5.*obj.nddoExchangeMat) * diagDens;
+            fockCenter = (1.5.*obj.nddoExchangeMat - 0.5.*obj.nddoCoulombMat) .* obj.orbitalElectronPopulation;
+            fockCenter = fockCenter - diag(diag(fockCenter)) + diag(fockDiag);
+            
+            for A = 1:obj.natom
+                atomA = obj.molecule.atomVect{A};
+                valLengthA = atomA.GetValenceSize();
+                indexScaleA = 1:valLengthA;
+                temp = zeros(valLengthA^2, 1);
+                for B = 1:obj.natom
+                    atomB = obj.molecule.atomVect{B};
+                    if(B ~= A)
+                        indexScaleB = atomB.GetFirstAOIndex():atomB.GetLastAOIndex();
+                        linedDens = reshape(obj.orbitalElectronPopulation(indexScaleB,indexScaleB),[],1);
+                        twoElecsMat = reshape(obj.twoElecsTwoAtomCores(A,B,indexScaleA,indexScaleA,:,:),valLengthA^2,[]);
+                        twoElecsMat = twoElecsMat(:,1:length(linedDens));
+                        temp = temp + twoElecsMat * linedDens;
+                        temp = temp + obj.GetElectronCoreAttraction(A, ...
+                            B, indexScaleA, indexScaleA);
+                    end
+                end
+                ind = indexScaleA+atomA.firstAOIndex-1;
+                fockCenter(ind, ind) = fockCenter(ind, ind) + reshape(temp,valLengthA,valLengthA);
+            end
+            
+            
+            fockFull = fockMargin + fockCenter;
         end
         
         function diatomicOverlapAOs = CalcDiatomicOverlapAOsInDiatomicFrame(obj, atomA, atomB)
@@ -228,7 +323,40 @@ classdef Mndo < Indo
                 throw(MException('Mndo:GetExchangeInt', 'Orbital type wrong.'));
             end
         end
-
+        
+        function couBlock = GetCoulombIntBlock(obj, atom)
+            couBlock = zeros(length(atom.valence));
+            Gss = obj.AtomGetNddoGss(atom);
+            couBlock(1,1) = Gss;
+            if(length(atom.valence) == 1)
+                return;
+            end
+            % deal with only p not d for now
+            Gsp = obj.AtomGetNddoGsp(atom);
+            couBlock(2:4,1) = Gsp;
+            couBlock(1,2:4) = Gsp;
+            couBlock(2:4,2:4) = obj.AtomGetNddoGpp2(atom);
+            Gpp = obj.AtomGetNddoGpp(atom);
+            diagBlock = [Gss;Gpp;Gpp;Gpp];
+            couBlock = couBlock - diag(diag(couBlock)) + diag(diagBlock);
+        end
+        
+        function excBlock = GetExchangeIntBlock(obj, atom)
+            excBlock = zeros(length(atom.valence));
+            Gss = obj.AtomGetNddoGss(atom);
+            excBlock(1,1) = Gss;
+            if(length(atom.valence) == 1)
+                return;
+            end
+            % deal with only p not d for now
+            Hsp = obj.AtomGetNddoHsp(atom);
+            excBlock(2:4,1) = Hsp;
+            excBlock(1,2:4) = Hsp;
+            excBlock(2:4,2:4) = obj.AtomGetNddoHpp(atom);
+            Gpp = obj.AtomGetNddoGpp(atom);
+            diagblock = [Gss;Gpp;Gpp;Gpp];
+            excBlock = excBlock - diag(diag(excBlock)) + diag(diagblock);
+        end
         
         function CalcTwoElecsTwoCores(obj)
             obj.CalcTwoElecsTwoAtomCores();
@@ -286,6 +414,16 @@ classdef Mndo < Indo
             else
                 throw(MException('Mndo:AtomGetBondingParameter', 'Orbital type wrong.'));
             end
+        end
+        
+        function valueVec = AtomGetCoreIntegralVec(~, atom)
+            valueVec = [atom.paramPool.mndoCoreintegralS; ...
+                atom.paramPool.mndoCoreintegralP];
+        end
+        
+        function valueVec = AtomGetBondingParameterVec(~, atom)
+            valueVec = [atom.paramPool.mndoBondingParameterS; ...
+                atom.paramPool.mndoBondingParameterP];
         end
         
         function res = AtomGetNddoGss(~, atom)
@@ -652,7 +790,7 @@ classdef Mndo < Indo
         
         function res = GetElectronCoreAttraction(obj, indexAtomA, indexAtomB, mu, nu)
             atomB = obj.molecule.atomVect{indexAtomB};
-            res = -1.0*atomB.coreCharge*obj.twoElecsTwoAtomCores(indexAtomA,indexAtomB,mu,nu,1,1);
+            res = -1.0*atomB.coreCharge*reshape(obj.twoElecsTwoAtomCores(indexAtomA,indexAtomB,mu,nu,1,1), [], 1);
         end
         
         %    double GetElectronCoreAttraction1stDerivative(int indexAtomA,

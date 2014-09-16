@@ -61,6 +61,16 @@ classdef Pm3 < Am1
             end
         end
         
+        function valueVec = AtomGetCoreIntegralVec(~, atom)
+            valueVec = [atom.paramPool.pm3CoreintegralS; ...
+                atom.paramPool.pm3CoreintegralP];
+        end
+        
+        function valueVec = AtomGetBondingParameterVec(~, atom)
+            valueVec = [atom.paramPool.pm3BondingParameterS; ...
+                atom.paramPool.pm3BondingParameterP];
+        end
+        
         function res = AtomGetNddoGss(~, atom)
             res = atom.paramPool.pm3Gss;
         end

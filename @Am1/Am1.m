@@ -93,6 +93,16 @@ classdef Am1 < Mndo
             end
         end
         
+        function valueVec = AtomGetCoreIntegralVec(~, atom)
+            valueVec = [atom.paramPool.am1CoreintegralS; ...
+                atom.paramPool.am1CoreintegralP];
+        end
+        
+        function valueVec = AtomGetBondingParameterVec(~, atom)
+            valueVec = [atom.paramPool.am1BondingParameterS; ...
+                atom.paramPool.am1BondingParameterP];
+        end
+        
         function res = AtomGetNddoGss(~, atom)
             res = atom.paramPool.am1Gss;
         end

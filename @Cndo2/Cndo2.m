@@ -52,7 +52,7 @@ classdef Cndo2 < handle
         coreChargeVecAtom;
         coreChargeVecBasis;
         imuAmuVecBasis;
-        bondParamMatAtom;
+        bondParamSumMatAtom;
         bondParamKMat;
 
     end
@@ -341,22 +341,18 @@ classdef Cndo2 < handle
             for i = 1:obj.natom
                 bondParamVecAtom(i) = obj.AtomGetBondingParameter(obj.molecule.atomVect{i});
             end
-            obj.bondParamMatAtom = bondParamVecAtom(:,ones(1,obj.natom));
-            obj.bondParamMatAtom = obj.bondParamMatAtom + obj.bondParamMatAtom';
+            obj.bondParamSumMatAtom = bondParamVecAtom(:,ones(1,obj.natom));
+            obj.bondParamSumMatAtom = obj.bondParamSumMatAtom + obj.bondParamSumMatAtom';
+            obj.bondParamSumMatAtom = obj.bondParamSumMatAtom - diag(diag(obj.bondParamSumMatAtom));
+            
             obj.imuAmuVecBasis = zeros(obj.nbf,1);
-            for i = 1:obj.nbf
-                angularType = obj.mapBasis2AngularType(i);
-                atom = obj.molecule.atomVect{obj.mapBasis2Atom(i)};
-                if(angularType == 1) % s
-                    obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuS;
-                elseif(angularType == 2) % py pz px
-                    obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuP;
-                elseif(angularType == 3) % dxy dyz dzz dzx dxxyy
-                    obj.imuAmuVecBasis(i) = atom.paramPool.imuAmuD;
-                else
-                    throw(MException('Cndo2:Preiterations', 'Angular type wrong.'));
-                end
+            imuAmuVecShell = zeros(obj.nshell, 1);
+            for i = 1:obj.natom
+                atom = obj.molecule.atomVect{i};
+                temp = [atom.paramPool.imuAmuS;atom.paramPool.imuAmuP;atom.paramPool.imuAmuD];
+                imuAmuVecShell(atom.GetFirstShellIndex():atom.GetLastShellIndex()) = temp(1:1+atom.nShell-1);
             end
+            obj.imuAmuVecBasis = imuAmuVecShell(obj.mapBasis2Shell);
         end
         
         function CalcSCFProperties(obj)
@@ -872,7 +868,7 @@ classdef Cndo2 < handle
         end
         
         function fockoffdiag = GetFockOffDiag(obj)
-            fockoffdiag = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            fockoffdiag = obj.bondParamSumMatAtom .* obj.bondParamKMat .* 0.5;
             fockoffdiag = fockoffdiag(obj.mapBasis2Atom, obj.mapBasis2Atom);
             fockoffdiag = fockoffdiag .* obj.overlapAOs; % H1 to this point
             
@@ -885,10 +881,9 @@ classdef Cndo2 < handle
             diagH1 = - obj.imuAmuVecBasis;
             
             % off diagonal part -- duplicated with below
-            fullH1 = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            fullH1 = obj.bondParamSumMatAtom .* obj.bondParamKMat .* 0.5;
             fullH1 = fullH1(obj.mapBasis2Atom, obj.mapBasis2Atom);
             fullH1 = fullH1 .* obj.overlapAOs;
-            fullH1 = fullH1 - diag(diag(fullH1));
             
             % full H1
             fullH1 = fullH1 + diag(diagH1);
@@ -901,10 +896,9 @@ classdef Cndo2 < handle
             diagH1 = diagH1 + temp(obj.mapBasis2Atom);
             
             % off diagonal part
-            fullH1 = obj.bondParamMatAtom .* obj.bondParamKMat .* 0.5;
+            fullH1 = obj.bondParamSumMatAtom .* obj.bondParamKMat .* 0.5;
             fullH1 = fullH1(obj.mapBasis2Atom, obj.mapBasis2Atom);
             fullH1 = fullH1 .* obj.overlapAOs;
-            fullH1 = fullH1 - diag(diag(fullH1));
             
             % full H1
             fullH1 = fullH1 + diag(diagH1);
@@ -925,6 +919,10 @@ classdef Cndo2 < handle
             
             % full G
             fullG = fullG + diag(diagG);
+        end
+        
+        function fockFull = GetFockFull(obj)
+            fockFull = [];
         end
         
         %    void TransposeFockMatrixMatrix(double** transposedFockMatrix) const;
@@ -1816,7 +1814,10 @@ classdef Cndo2 < handle
             axisA)
         
         function guessFock = CalcGuessFock(obj)
-            if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO)
+            if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO ...
+                    || obj.theory == EnumTheory.MNDO ...
+                    || obj.theory == EnumTheory.AM1 ...
+                    || obj.theory == EnumTheory.PM3)
                 guessFock = obj.GetGuessH1();
             else
                 guessFock = obj.CalcFockMatrixOld(true);
@@ -1826,6 +1827,10 @@ classdef Cndo2 < handle
         function fockMatrix = CalcFockMatrix(obj)
             if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO)
                 fockMatrix = obj.h1Matrix + obj.GetG();
+            elseif(obj.theory == EnumTheory.MNDO ...
+                    || obj.theory == EnumTheory.AM1 ...
+                    || obj.theory == EnumTheory.PM3)
+                fockMatrix = obj.GetFockFull();
             else
                 fockMatrix = obj.CalcFockMatrixOld(false);
             end
