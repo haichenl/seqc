@@ -235,9 +235,9 @@ classdef Cndo2 < handle
             obj.gammaAB = obj.CalcGammaAB();
             % end
             obj.overlapAOs = obj.CalcOverlapAOs();
+            obj.CalcTwoElecsTwoCores();
             obj.Preiterations();
             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
-            obj.CalcTwoElecsTwoCores();
             obj.h1Matrix = obj.CalcH1Matrix();
             
             % SCF
@@ -1825,12 +1825,16 @@ classdef Cndo2 < handle
         end
         
         function fockMatrix = CalcFockMatrix(obj)
-            if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO)
-                fockMatrix = obj.h1Matrix + obj.GetG();
-            elseif(obj.theory == EnumTheory.MNDO ...
+            if(obj.theory == EnumTheory.CNDO2 ...
+                    || obj.theory == EnumTheory.INDO ...
+                    || obj.theory == EnumTheory.MNDO ...
                     || obj.theory == EnumTheory.AM1 ...
                     || obj.theory == EnumTheory.PM3)
-                fockMatrix = obj.GetFockFull();
+                fockMatrix = obj.h1Matrix + obj.GetG();
+%             elseif(obj.theory == EnumTheory.MNDO ...
+%                     || obj.theory == EnumTheory.AM1 ...
+%                     || obj.theory == EnumTheory.PM3)
+%                 fockMatrix = obj.GetFockFull();
             else
                 fockMatrix = obj.CalcFockMatrixOld(false);
             end
@@ -1866,7 +1870,11 @@ classdef Cndo2 < handle
         end
         
         function h1Matrix = CalcH1Matrix(obj)
-            if(obj.theory == EnumTheory.CNDO2 || obj.theory == EnumTheory.INDO)
+            if(obj.theory == EnumTheory.CNDO2 ...
+                || obj.theory == EnumTheory.INDO ...
+                || obj.theory == EnumTheory.MNDO ...
+                || obj.theory == EnumTheory.AM1 ...
+                || obj.theory == EnumTheory.PM3)
                 h1Matrix = obj.GetH1();
             else
             bkupOrbitalElectronPopulation = obj.orbitalElectronPopulation;

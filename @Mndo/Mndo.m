@@ -7,6 +7,9 @@ classdef Mndo < Indo
         nddoCoulombMat;
         nddoExchangeMat
         
+        twoElecsCache1;
+        twoElecsCache2;
+        
     end
     
     properties (SetAccess = private)
@@ -74,6 +77,20 @@ classdef Mndo < Indo
                 dimBlock = atom.GetFirstAOIndex():atom.GetLastAOIndex();
                 obj.nddoCoulombMat(dimBlock,dimBlock) = obj.GetCoulombIntBlock(atom);
                 obj.nddoExchangeMat(dimBlock,dimBlock) = obj.GetExchangeIntBlock(atom);
+            end
+            
+            obj.twoElecsCache1 = cell(obj.natom);
+            obj.twoElecsCache2 = cell(obj.natom);
+            for A = 1:obj.natom
+                for B = 1:obj.natom
+                    atomA = obj.molecule.atomVect{A};
+                    valLengthA = atomA.valence(end);
+                    indexScaleA = 1:valLengthA;
+                    twoElecsCache_ = reshape(obj.twoElecsTwoAtomCores(A,B,:,:,:,:), 4,4,4,4);
+                    twoElecsCache_ = permute(twoElecsCache_, [3 2 4 1]);
+                    obj.twoElecsCache1{A,B} = reshape(twoElecsCache_, 16, 16);
+                    obj.twoElecsCache2{A,B} = reshape(obj.twoElecsTwoAtomCores(A,B,indexScaleA,indexScaleA,:,:),valLengthA^2,[]);
+                end
             end
             
         end
@@ -222,7 +239,107 @@ classdef Mndo < Indo
             guessH1 = guessH1 - diag(diag(guessH1)) + diag(fockDiag);
         end
         
+        function fullH1 = GetH1(obj)
+            marginizer = ones(obj.natom);
+            marginizer = marginizer - diag(diag(marginizer));
+            marginizer = marginizer(obj.mapBasis2Atom,obj.mapBasis2Atom);
+            marginH1 = 0.5 .* marginizer .* obj.bondParamSumMatBasis .* obj.overlapAOs;
+            marginH1 = triu(marginH1, +1);
+            marginH1 = marginH1 + marginH1';
+            
+            diagH1 = obj.nddoCoreIntVecBasis;
+            centerH1 = diag(diagH1);
+            
+            for A = 1:obj.natom
+                atomA = obj.molecule.atomVect{A};
+                valLengthA = atomA.valence(end);
+                indexScaleA = 1:valLengthA;
+                temp = zeros(valLengthA^2, 1);
+                for B = 1:obj.natom
+                    atomB = obj.molecule.atomVect{B};
+                    coreAttr = -atomB.coreCharge.*reshape(obj.twoElecsTwoAtomCores(A,B,indexScaleA,indexScaleA,1,1), [], 1);
+                    if(B ~= A)
+                        temp = temp + coreAttr;
+                    end
+                end
+                ind = indexScaleA+atomA.firstAOIndex-1;
+                centerH1(ind, ind) = centerH1(ind, ind) + reshape(temp,valLengthA,valLengthA);
+            end
+            
+            
+            fullH1 = marginH1 + centerH1;
+        end
+        
+        function fullG = GetG(obj)
+            marginG = zeros(obj.nbf);
+            for A = 1:obj.natom
+                atomA = obj.molecule.atomVect{A};
+                valLengthA = atomA.valence(end);
+                indScaleA = atomA.firstAOIndex+(atomA.valence)-1;
+                for B = 1:A-1
+                    atomB = obj.molecule.atomVect{B};
+                    valLengthB = atomB.valence(end);
+                    indScaleB = atomB.firstAOIndex+(atomB.valence)-1;
+                    twoElecsCache_ = obj.twoElecsCache1{A,B};
+                    linedDens = reshape(obj.orbitalElectronPopulation(indScaleA,indScaleB)',[],1);
+                    twoElecsCache_ = twoElecsCache_(1:length(linedDens), 1:length(linedDens));
+                    marginG(indScaleB, indScaleA) = marginG(indScaleB, indScaleA) - 0.5 .* reshape(twoElecsCache_ * linedDens, valLengthB, valLengthA);
+                end
+            end
+            marginG = triu(marginG, +1);
+            marginG = marginG + marginG';
+            
+            diagDens = diag(obj.orbitalElectronPopulation);
+            diagG = (obj.nddoCoulombMat - 0.5.*obj.nddoExchangeMat) * diagDens;
+            centerG = (1.5.*obj.nddoExchangeMat - 0.5.*obj.nddoCoulombMat) .* obj.orbitalElectronPopulation;
+            centerG = centerG - diag(diag(centerG)) + diag(diagG);
+            
+            for A = 1:obj.natom
+                atomA = obj.molecule.atomVect{A};
+                valLengthA = atomA.valence(end);
+                indexScaleA = 1:valLengthA;
+                temp = zeros(valLengthA^2, 1);
+                for B = 1:obj.natom
+                    atomB = obj.molecule.atomVect{B};
+                    indScaleB = atomB.firstAOIndex+(atomB.valence)-1;
+                    if(B ~= A)
+                        linedDens = reshape(obj.orbitalElectronPopulation(indScaleB,indScaleB),[],1);
+                        twoElecsMat = obj.twoElecsCache2{A,B};
+                        twoElecsMat = twoElecsMat(:,1:length(linedDens));
+                        temp = temp + twoElecsMat * linedDens;
+                    end
+                end
+                ind = indexScaleA+atomA.firstAOIndex-1;
+                centerG(ind, ind) = centerG(ind, ind) + reshape(temp,valLengthA,valLengthA);
+            end
+            
+%             for atomACell = obj.molecule.atomVect
+%                 atomA = atomACell{1};
+%                 A = atomA.index;
+%                 valLengthA = atomA.valence(end);
+%                 indexScaleA = 1:valLengthA;
+%                 temp = zeros(valLengthA^2, 1);
+%                 for atomBCell = obj.molecule.atomVect
+%                     atomB = atomBCell{1};
+%                     B = atomB.index;
+%                     indScaleB = atomB.firstAOIndex+(atomB.valence)-1;
+%                     if(B ~= A)
+%                         linedDens = reshape(obj.orbitalElectronPopulation(indScaleB,indScaleB),[],1);
+%                         twoElecsMat = obj.twoElecsCache2{A,B};
+%                         twoElecsMat = twoElecsMat(:,1:length(linedDens));
+%                         temp = temp + twoElecsMat * linedDens;
+%                     end
+%                 end
+%                 ind = indexScaleA+atomA.firstAOIndex-1;
+%                 centerG(ind, ind) = centerG(ind, ind) + reshape(temp,valLengthA,valLengthA);
+%             end
+            
+            
+            fullG = marginG + centerG;
+        end
+        
         function fockFull = GetFockFull(obj)
+            obj.GetG;
             marginizer = ones(obj.natom);
             marginizer = marginizer - diag(diag(marginizer));
             marginizer = marginizer(obj.mapBasis2Atom,obj.mapBasis2Atom);
@@ -234,7 +351,7 @@ classdef Mndo < Indo
                 for B = 1:A-1
                     atomB = obj.molecule.atomVect{B};
                     valLengthB = atomB.GetValenceSize();
-                    indScaleB = (1:valLengthB)+atomB.firstAOIndex-1;
+                    indScaleB = atomB.firstAOIndex+(atomB.valence)-1;
                     twoElecsCache = reshape(obj.twoElecsTwoAtomCores(A,B,:,:,:,:), 4,4,4,4);
                     twoElecsCache = permute(twoElecsCache, [3 2 4 1]);
                     twoElecsCache = reshape(twoElecsCache, 16, 16);
@@ -259,14 +376,14 @@ classdef Mndo < Indo
                 temp = zeros(valLengthA^2, 1);
                 for B = 1:obj.natom
                     atomB = obj.molecule.atomVect{B};
+                    indexScaleB = atomB.firstAOIndex+(atomB.valence)-1;
+                    coreAttr = -atomB.coreCharge.*reshape(obj.twoElecsTwoAtomCores(A,B,indexScaleA,indexScaleA,1,1), [], 1);
                     if(B ~= A)
-                        indexScaleB = atomB.GetFirstAOIndex():atomB.GetLastAOIndex();
                         linedDens = reshape(obj.orbitalElectronPopulation(indexScaleB,indexScaleB),[],1);
                         twoElecsMat = reshape(obj.twoElecsTwoAtomCores(A,B,indexScaleA,indexScaleA,:,:),valLengthA^2,[]);
                         twoElecsMat = twoElecsMat(:,1:length(linedDens));
                         temp = temp + twoElecsMat * linedDens;
-                        temp = temp + obj.GetElectronCoreAttraction(A, ...
-                            B, indexScaleA, indexScaleA);
+                        temp = temp + coreAttr;
                     end
                 end
                 ind = indexScaleA+atomA.firstAOIndex-1;
@@ -490,6 +607,61 @@ classdef Mndo < Indo
     
     methods (Access = private)
         
+%         function CalcTwoElecsTwoAtomCores(obj)
+%             dxy = 4;
+%             totalNumberAtoms = length(obj.molecule.atomVect);
+%             obj.twoElecsTwoAtomCores = zeros(totalNumberAtoms,totalNumberAtoms,dxy,dxy,dxy,dxy);
+%             
+%             for a = 1:totalNumberAtoms
+%                 % note that terms with condition a==b are not needed to calculate.
+%                 for b = a+1:totalNumberAtoms
+%                     diatomicTwoElecsTwoCores = ...
+%                         obj.CalcDiatomicTwoElecsTwoCores( ...
+%                         obj.molecule.atomVect{a}, obj.molecule.atomVect{b});
+%                     i=1;
+%                     for mu = 1:dxy
+%                         for nu = mu:dxy
+%                             j=1;
+%                             for lambda = 1:dxy
+%                                 for sigma = lambda:dxy
+%                                     obj.twoElecsTwoAtomCoresMpiBuff(a,b,i,j) ...
+%                                         = diatomicTwoElecsTwoCores(mu,nu,lambda,sigma);
+%                                     j = j + 1;
+%                                 end
+%                             end
+%                             i = i + 1;
+%                         end
+%                     end
+%                 end
+%             end
+%             
+%             for a = 1:totalNumberAtoms
+%                 for b = a+1:totalNumberAtoms
+%                     i=1;
+%                     for mu = 1:dxy
+%                         for nu = mu:dxy
+%                             j=1;
+%                             for lambda = 1:dxy
+%                                 for sigma = lambda:dxy
+%                                     value = obj.twoElecsTwoAtomCoresMpiBuff(a,b,i,j);
+%                                     obj.twoElecsTwoAtomCores(a,b,mu,nu,lambda,sigma) = value;
+%                                     obj.twoElecsTwoAtomCores(a,b,mu,nu,sigma,lambda) = value;
+%                                     obj.twoElecsTwoAtomCores(a,b,nu,mu,lambda,sigma) = value;
+%                                     obj.twoElecsTwoAtomCores(a,b,nu,mu,sigma,lambda) = value;
+%                                     obj.twoElecsTwoAtomCores(b,a,lambda,sigma,mu,nu) = value;
+%                                     obj.twoElecsTwoAtomCores(b,a,lambda,sigma,nu,mu) = value;
+%                                     obj.twoElecsTwoAtomCores(b,a,sigma,lambda,mu,nu) = value;
+%                                     obj.twoElecsTwoAtomCores(b,a,sigma,lambda,nu,mu) = value;
+%                                     j = j + 1;
+%                                 end
+%                             end
+%                             i = i + 1;
+%                         end
+%                     end
+%                 end
+%             end
+%         end
+        
         function CalcTwoElecsTwoAtomCores(obj)
             dxy = 4;
             totalNumberAtoms = length(obj.molecule.atomVect);
@@ -501,48 +673,11 @@ classdef Mndo < Indo
                     diatomicTwoElecsTwoCores = ...
                         obj.CalcDiatomicTwoElecsTwoCores( ...
                         obj.molecule.atomVect{a}, obj.molecule.atomVect{b});
-                    i=1;
-                    for mu = 1:dxy
-                        for nu = mu:dxy
-                            j=1;
-                            for lambda = 1:dxy
-                                for sigma = lambda:dxy
-                                    obj.twoElecsTwoAtomCoresMpiBuff(a,b,i,j) ...
-                                        = diatomicTwoElecsTwoCores(mu,nu,lambda,sigma);
-                                    j = j + 1;
-                                end
-                            end
-                            i = i + 1;
-                        end
-                    end
+                    obj.twoElecsTwoAtomCores(a,b,:,:,:,:) = diatomicTwoElecsTwoCores;
+                    obj.twoElecsTwoAtomCores(b,a,:,:,:,:) = permute(diatomicTwoElecsTwoCores, [3 4 1 2]);
                 end
             end
             
-            for a = 1:totalNumberAtoms
-                for b = a+1:totalNumberAtoms
-                    i=1;
-                    for mu = 1:dxy
-                        for nu = mu:dxy
-                            j=1;
-                            for lambda = 1:dxy
-                                for sigma = lambda:dxy
-                                    value = obj.twoElecsTwoAtomCoresMpiBuff(a,b,i,j);
-                                    obj.twoElecsTwoAtomCores(a,b,mu,nu,lambda,sigma) = value;
-                                    obj.twoElecsTwoAtomCores(a,b,mu,nu,sigma,lambda) = value;
-                                    obj.twoElecsTwoAtomCores(a,b,nu,mu,lambda,sigma) = value;
-                                    obj.twoElecsTwoAtomCores(a,b,nu,mu,sigma,lambda) = value;
-                                    obj.twoElecsTwoAtomCores(b,a,lambda,sigma,mu,nu) = value;
-                                    obj.twoElecsTwoAtomCores(b,a,lambda,sigma,nu,mu) = value;
-                                    obj.twoElecsTwoAtomCores(b,a,sigma,lambda,mu,nu) = value;
-                                    obj.twoElecsTwoAtomCores(b,a,sigma,lambda,nu,mu) = value;
-                                    j = j + 1;
-                                end
-                            end
-                            i = i + 1;
-                        end
-                    end
-                end
-            end
         end
         
         function CalcTwoElecsAtomEpcCores(obj)
@@ -790,7 +925,7 @@ classdef Mndo < Indo
         
         function res = GetElectronCoreAttraction(obj, indexAtomA, indexAtomB, mu, nu)
             atomB = obj.molecule.atomVect{indexAtomB};
-            res = -1.0*atomB.coreCharge*reshape(obj.twoElecsTwoAtomCores(indexAtomA,indexAtomB,mu,nu,1,1), [], 1);
+            res = -atomB.coreCharge*reshape(obj.twoElecsTwoAtomCores(indexAtomA,indexAtomB,mu,nu,1,1), [], 1);
         end
         
         %    double GetElectronCoreAttraction1stDerivative(int indexAtomA,
