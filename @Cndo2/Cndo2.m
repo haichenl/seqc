@@ -54,6 +54,10 @@ classdef Cndo2 < handle
         imuAmuVecBasis;
         bondParamSumMatAtom;
         bondParamKMat;
+        
+        atomValLength;
+        atomValence;
+        atomAOinds;
 
     end
     
@@ -216,6 +220,13 @@ classdef Cndo2 < handle
             tempK2(tempK==1) = obj.bondingAdjustParameterK(1);
             tempK2(tempK==0) = obj.bondingAdjustParameterK(2);
             obj.bondParamKMat = tempK2;
+            
+            for i = 1:obj.natom
+                atom = obj.molecule.atomVect{i};
+                obj.atomValLength(i) = length(atom.valence);
+                obj.atomValence{i} = atom.valence;
+                obj.atomAOinds{i} = atom.GetFirstAOIndex():atom.GetLastAOIndex();
+            end
             
         end
         

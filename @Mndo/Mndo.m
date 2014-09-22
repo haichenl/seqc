@@ -273,13 +273,11 @@ classdef Mndo < Indo
         function fullG = GetG(obj)
             marginG = zeros(obj.nbf);
             for A = 1:obj.natom
-                atomA = obj.molecule.atomVect{A};
-                valLengthA = atomA.valence(end);
-                indScaleA = atomA.firstAOIndex+(atomA.valence)-1;
+                valLengthA = obj.atomValLength(A);
+                indScaleA = obj.atomAOinds{A};
                 for B = 1:A-1
-                    atomB = obj.molecule.atomVect{B};
-                    valLengthB = atomB.valence(end);
-                    indScaleB = atomB.firstAOIndex+(atomB.valence)-1;
+                    valLengthB = obj.atomValLength(B);
+                    indScaleB = obj.atomAOinds{B};
                     twoElecsCache_ = obj.twoElecsCache1{A,B};
                     linedDens = reshape(obj.orbitalElectronPopulation(indScaleA,indScaleB)',[],1);
                     twoElecsCache_ = twoElecsCache_(1:length(linedDens), 1:length(linedDens));
@@ -295,13 +293,10 @@ classdef Mndo < Indo
             centerG = centerG - diag(diag(centerG)) + diag(diagG);
             
             for A = 1:obj.natom
-                atomA = obj.molecule.atomVect{A};
-                valLengthA = atomA.valence(end);
-                indexScaleA = 1:valLengthA;
+                valLengthA = obj.atomValLength(A);
                 temp = zeros(valLengthA^2, 1);
                 for B = 1:obj.natom
-                    atomB = obj.molecule.atomVect{B};
-                    indScaleB = atomB.firstAOIndex+(atomB.valence)-1;
+                    indScaleB = obj.atomAOinds{B};
                     if(B ~= A)
                         linedDens = reshape(obj.orbitalElectronPopulation(indScaleB,indScaleB),[],1);
                         twoElecsMat = obj.twoElecsCache2{A,B};
@@ -309,32 +304,9 @@ classdef Mndo < Indo
                         temp = temp + twoElecsMat * linedDens;
                     end
                 end
-                ind = indexScaleA+atomA.firstAOIndex-1;
+                ind = obj.atomAOinds{A};
                 centerG(ind, ind) = centerG(ind, ind) + reshape(temp,valLengthA,valLengthA);
             end
-            
-%             for atomACell = obj.molecule.atomVect
-%                 atomA = atomACell{1};
-%                 A = atomA.index;
-%                 valLengthA = atomA.valence(end);
-%                 indexScaleA = 1:valLengthA;
-%                 temp = zeros(valLengthA^2, 1);
-%                 for atomBCell = obj.molecule.atomVect
-%                     atomB = atomBCell{1};
-%                     B = atomB.index;
-%                     indScaleB = atomB.firstAOIndex+(atomB.valence)-1;
-%                     if(B ~= A)
-%                         linedDens = reshape(obj.orbitalElectronPopulation(indScaleB,indScaleB),[],1);
-%                         twoElecsMat = obj.twoElecsCache2{A,B};
-%                         twoElecsMat = twoElecsMat(:,1:length(linedDens));
-%                         temp = temp + twoElecsMat * linedDens;
-%                     end
-%                 end
-%                 ind = indexScaleA+atomA.firstAOIndex-1;
-%                 centerG(ind, ind) = centerG(ind, ind) + reshape(temp,valLengthA,valLengthA);
-%             end
-            
-            
             fullG = marginG + centerG;
         end
         
