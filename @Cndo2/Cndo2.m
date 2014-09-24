@@ -248,7 +248,7 @@ classdef Cndo2 < handle
             obj.overlapAOs = obj.CalcOverlapAOs();
             obj.CalcTwoElecsTwoCores();
             obj.Preiterations();
-            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
+%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
             obj.h1Matrix = obj.CalcH1Matrix();
             
             % SCF
@@ -299,7 +299,8 @@ classdef Cndo2 < handle
                 if(iterationStep==maxIterationsSCF-1)
                     % throw(MException('Cndo2:DoSCF', 'SCF not converged.'));
                     disp('SCF not converged.');
-                    obj.elecSCFEnergy = 0;
+                    obj.CalcSCFProperties();
+%                     obj.elecSCFEnergy = 0;
                 end
             end
         end
