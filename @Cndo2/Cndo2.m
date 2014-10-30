@@ -248,7 +248,7 @@ classdef Cndo2 < handle
             obj.overlapAOs = obj.CalcOverlapAOs();
             obj.CalcTwoElecsTwoCores();
             obj.Preiterations();
-%             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
+            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(EnumSTOnG.STO6G));
             obj.h1Matrix = obj.CalcH1Matrix();
             
             % SCF
