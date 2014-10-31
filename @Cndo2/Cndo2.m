@@ -2,6 +2,8 @@ classdef Cndo2 < handle
     
     properties (SetAccess = protected)
         
+        converged;
+        
         enableAtomTypes = {};
         molecule;
         theory;
@@ -273,6 +275,7 @@ classdef Cndo2 < handle
                     obj.orbitalElectronPopulation);
                 
                 if(hasConverged)
+                    obj.converged = 1;
                     obj.CalcSCFProperties();
                     break;
                 else
@@ -297,6 +300,7 @@ classdef Cndo2 < handle
                 
                 % SCF fails
                 if(iterationStep==maxIterationsSCF-1)
+                    obj.converged = 0;
                     % throw(MException('Cndo2:DoSCF', 'SCF not converged.'));
                     disp('SCF not converged.');
                     obj.CalcSCFProperties();
