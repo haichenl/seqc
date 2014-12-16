@@ -23,11 +23,11 @@ classdef ModelSeqc < handle % wrapper of seqc
         
         function obj = ModelSeqc(zmat_in, class, paramManager)
             obj.frag.config.zmat = zmat_in;
-            mol = Molecule();
+            mol = SEQC.Molecule();
             cart = zmat_in.GauCart();
             for atomi = 1:length(zmat_in.atoms)
                 xyz = cart(atomi, :) / 0.5291772;
-                mol.AddAtom(AtomFactory.Create(EnumAtom(zmat_in.atoms{atomi}.z), atomi, xyz));
+                mol.AddAtom(SEQC.AtomFactory.Create(EnumAtom(zmat_in.atoms{atomi}.z), atomi, xyz));
             end
             mol.CalcBasics();
             mol.AddParamPoolsIntoManager(paramManager);

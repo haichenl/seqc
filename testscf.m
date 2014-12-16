@@ -1,4 +1,9 @@
-clear classes
+function testscf()
+
+
+import SEQC.*;
+
+%%
 disp('Begin cndo/2 tests');
 
 c1 = AtomFactory.Create(EnumAtom.C, 1, [         0         0         0]./0.5291772); % ang 2 au
@@ -50,7 +55,6 @@ if(~conditionDipole)
 end
 
 %%
-clear classes
 disp('Begin indo tests');
 
 c1 = AtomFactory.Create(EnumAtom.C, 1, [         0         0         0]./0.5291772); % ang 2 au
@@ -102,9 +106,9 @@ if(~conditionDipole)
 end
 
 
-%%
-disp('Begin zindo/s tests');
 
+%%
+disp('Begin mndo tests');
 c1 = AtomFactory.Create(EnumAtom.C, 1, [         0         0         0]./0.5291772); % ang 2 au
 h2 = AtomFactory.Create(EnumAtom.Cl, 2, [         0         0    1.6822]./0.5291772);
 h3 = AtomFactory.Create(EnumAtom.H, 3, [    1.0204         0   -0.3602]./0.5291772);
@@ -118,44 +122,6 @@ mol.AddAtom(h3);
 mol.AddAtom(h4);
 mol.AddAtom(h5);
 mol.CalcBasics();
-
-model = ZindoS();
-model.SetMolecule(mol);
-
-tic
-model.DoSCF();
-toc
-
-epsRel = 1e-4;
-conditionEScf = testRelErr(model.elecSCFEnergy, -1.291680e+01) < epsRel;
-conditionEMo = (testRelErr(model.energiesMO(7), -4.702084e-01) < epsRel)...
-    && (testRelErr(model.energiesMO(8), 6.439472e-02) < epsRel);
-conditionCoreRep = testRelErr(model.coreRepulsionEnergy, 2.044227e+01) < epsRel;
-dip = reshape(model.electronicTransitionDipoleMoments, 3, []);
-conditionDipole = (testRelErr(dip(1), -3.640055e-04) < epsRel)...
-    && (testRelErr(dip(2), -2.807661e-04) < epsRel)...
-    && (testRelErr(dip(3), 2.126597e+01) < epsRel);
-if(conditionEScf && conditionEMo && conditionCoreRep && conditionDipole)
-    disp('zindo/s tests all passed');
-else
-    disp('some zindo/s tests failed');
-end
-if(~conditionEScf)
-    disp('zindo/s scf energy failed');
-end
-if(~conditionEMo)
-    disp('zindo/s homo or lumo failed');
-end
-if(~conditionCoreRep)
-    disp('zindo/s core repulsion energy failed')
-end
-if(~conditionDipole)
-    disp('zindo/s dipole failed')
-end
-
-
-%%
-disp('Begin mndo tests');
 
 model = Mndo();
 model.SetMolecule(mol);
@@ -266,4 +232,8 @@ if(~conditionDipole)
     disp('pm3 dipole failed')
 end
 
+end
 
+function res = testRelErr(numTar, numRef)
+res = abs((numTar - numRef) / numRef);
+end
