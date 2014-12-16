@@ -2,6 +2,8 @@ classdef Cndo2 < handle
     
     properties (SetAccess = protected)
         
+        environmentFieldStrengths = zeros(3,1); % external field used in SCF
+        
         converged;
         
         enableAtomTypes = {};
@@ -226,7 +228,11 @@ classdef Cndo2 < handle
                 obj.atomValence{i} = atom.valence;
                 obj.atomAOinds{i} = atom.GetFirstAOIndex():atom.GetLastAOIndex();
             end
-            
+            obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(SEQC.EnumSTOnG.STO6G));
+        end
+        
+        function SetEnvironmentFieldStrengths(obj, environmentFieldStrengths)
+            obj.environmentFieldStrengths = environmentFieldStrengths;
         end
         
         function DoSCF(obj)
@@ -257,7 +263,10 @@ classdef Cndo2 < handle
                 obj.atomicElectronPopulation = obj.CalcAtomicElectronPopulation();
                 oldOrbitalElectronPopulation = obj.orbitalElectronPopulation;
                 
-                obj.fockMatrix = obj.h1Matrix + obj.GetG();
+                obj.fockMatrix = obj.h1Matrix + obj.GetG() ...
+                    + obj.cartesianMatrix(:,:,1).*obj.environmentFieldStrengths(1) ...
+                    + obj.cartesianMatrix(:,:,2).*obj.environmentFieldStrengths(2) ...
+                    + obj.cartesianMatrix(:,:,3).*obj.environmentFieldStrengths(3);
                 
                 % diagonalization of the Fock matrix
                 obj.DiagonalizeFock();
