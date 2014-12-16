@@ -1,4 +1,4 @@
-classdef Molecule < handle
+classdef MoleculeSEQC < handle
     
     properties (SetAccess = private)
         
@@ -18,7 +18,7 @@ classdef Molecule < handle
     
     methods
         
-        function obj = Molecule()
+        function obj = MoleculeSEQC()
         end
         
         function AddAtom(obj, atom)

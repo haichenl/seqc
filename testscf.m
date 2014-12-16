@@ -12,7 +12,7 @@ h3 = AtomFactory.Create(EnumAtom.H, 3, [    1.0204         0   -0.3602]./0.52917
 h4 = AtomFactory.Create(EnumAtom.H, 4, [   -0.5102   -0.8835   -0.3604]./0.5291772);
 h5 = AtomFactory.Create(EnumAtom.H, 5, [   -0.5100    0.8836   -0.3604]./0.5291772);
 
-mol = Molecule();
+mol = MoleculeSEQC();
 mol.AddAtom(c1);
 mol.AddAtom(h2);
 mol.AddAtom(h3);
@@ -63,7 +63,7 @@ h3 = AtomFactory.Create(EnumAtom.H, 3, [    1.0204         0   -0.3602]./0.52917
 h4 = AtomFactory.Create(EnumAtom.H, 4, [   -0.5102   -0.8835   -0.3604]./0.5291772);
 h5 = AtomFactory.Create(EnumAtom.H, 5, [   -0.5100    0.8836   -0.3604]./0.5291772);
 
-mol = Molecule();
+mol = MoleculeSEQC();
 mol.AddAtom(c1);
 mol.AddAtom(h2);
 mol.AddAtom(h3);
@@ -115,7 +115,7 @@ h3 = AtomFactory.Create(EnumAtom.H, 3, [    1.0204         0   -0.3602]./0.52917
 h4 = AtomFactory.Create(EnumAtom.H, 4, [   -0.5102   -0.8835   -0.3604]./0.5291772);
 h5 = AtomFactory.Create(EnumAtom.H, 5, [   -0.5100    0.8836   -0.3604]./0.5291772);
 
-mol = Molecule();
+mol = MoleculeSEQC();
 mol.AddAtom(c1);
 mol.AddAtom(h2);
 mol.AddAtom(h3);
