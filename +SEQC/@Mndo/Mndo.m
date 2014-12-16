@@ -1,6 +1,6 @@
-classdef Mndo < SEQC.Indo
+classdef Mndo < SEQC.Cndo2
     
-    properties (SetAccess = protected)
+    properties (Access = protected)
         
         nddoCoreIntVecBasis;
         bondParamSumMatBasis;
@@ -12,11 +12,11 @@ classdef Mndo < SEQC.Indo
         
     end
     
-    properties (SetAccess = private)
+    properties (Access = private)
         
         twoElecsTwoAtomCoresMpiBuff;
         twoElecsAtomEpcCoresMpiBuff;
-        heatsFormation;
+        heatsFormation = 0;
         
     end
     
@@ -25,15 +25,6 @@ classdef Mndo < SEQC.Indo
         function obj = Mndo()
             % protedted variables and methods
             obj.theory = SEQC.EnumTheory.MNDO;
-            obj.SetEnableAtomTypes();
-            % private variables
-            obj.twoElecsTwoAtomCoresMpiBuff = [];
-            obj.twoElecsAtomEpcCoresMpiBuff = [];
-            obj.heatsFormation = 0.0;
-        end
-        
-        function SetMolecule(obj, mol)
-            SetMolecule@SEQC.Cndo2(obj, mol);
         end
         
     end

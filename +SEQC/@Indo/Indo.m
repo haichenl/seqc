@@ -1,6 +1,6 @@
 classdef Indo < SEQC.Cndo2
     
-    properties (SetAccess = private)
+    properties (Access = private)
         
         indoG1VecAtom;
         indoF2VecAtom;
@@ -23,7 +23,6 @@ classdef Indo < SEQC.Cndo2
         
         function obj = Indo()
             obj.theory = SEQC.EnumTheory.INDO;
-            obj.SetEnableAtomTypes();
         end
         
         function SetMolecule(obj, mol)

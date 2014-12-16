@@ -4,7 +4,6 @@ classdef Am1 < SEQC.Mndo
         
         function obj = Am1()
             obj.theory = SEQC.EnumTheory.AM1;
-            obj.SetEnableAtomTypes();
         end
         
     end

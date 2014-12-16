@@ -8,10 +8,6 @@ classdef (Abstract) Atom < handle
         valence;
         realSphericalHarmonicsIndices;
         
-        % for vectorize
-        lVec;
-        mVec;
-        
         nShell;
         
         valenceShellType;
@@ -27,9 +23,11 @@ classdef (Abstract) Atom < handle
         paramPool;
         
     end
-    
+        
     properties (SetAccess = private)
+        
         index;
+        
     end
     
     methods

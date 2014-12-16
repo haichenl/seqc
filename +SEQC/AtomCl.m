@@ -15,8 +15,8 @@ classdef AtomCl < SEQC.Atom
             obj.valence(9) = 9;
             for i=5:length(obj.valence)
                 obj.realSphericalHarmonicsIndices{i} = SEQC.RealSphericalHarmonicsIndex(obj.valence(i));
-                obj.lVec(i) = obj.realSphericalHarmonicsIndices{i}.l;
-                obj.mVec(i) = obj.realSphericalHarmonicsIndices{i}.m;
+%                 obj.lVec(i) = obj.realSphericalHarmonicsIndices{i}.l;
+%                 obj.mVec(i) = obj.realSphericalHarmonicsIndices{i}.m;
             end
             obj.nShell = 3;
         end
@@ -25,8 +25,8 @@ classdef AtomCl < SEQC.Atom
             if(length(obj.valence) > 4)
                 obj.valence = obj.valence(1:4);
                 obj.realSphericalHarmonicsIndices = obj.realSphericalHarmonicsIndices{1:4};
-                obj.lVec = obj.lVec(1:4);
-                obj.mVec = obj.mVec(1:4);
+%                 obj.lVec = obj.lVec(1:4);
+%                 obj.mVec = obj.mVec(1:4);
             end
             obj.nShell = 2;
         end
@@ -50,12 +50,8 @@ classdef AtomCl < SEQC.Atom
 %             obj.valence{3} = EnumOrbital.pz;
 %             obj.valence{4} = EnumOrbital.px;
             obj.valence = (1:4)';
-            obj.lVec = zeros(length(obj.valence), 1);
-            obj.mVec = zeros(length(obj.valence), 1);
             for i=1:length(obj.valence)
                 obj.realSphericalHarmonicsIndices{i} = RealSphericalHarmonicsIndex(obj.valence(i));
-                obj.lVec(i) = obj.realSphericalHarmonicsIndices{i}.l;
-                obj.mVec(i) = obj.realSphericalHarmonicsIndices{i}.m;
             end
             obj.vdWCoefficient = 8.00*Arguments.GetInstance().GetJ2AU()...
                 *power(Arguments.GetInstance().GetNm2AU(),6.0)...

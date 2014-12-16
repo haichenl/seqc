@@ -4,7 +4,6 @@ classdef Pm3 < SEQC.Am1
         
         function obj = Pm3()
             obj.theory = SEQC.EnumTheory.PM3;
-            obj.SetEnableAtomTypes();
         end
         
     end

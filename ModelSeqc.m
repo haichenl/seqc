@@ -27,7 +27,7 @@ classdef ModelSeqc < handle % wrapper of seqc
             cart = zmat_in.GauCart();
             for atomi = 1:length(zmat_in.atoms)
                 xyz = cart(atomi, :) / 0.5291772;
-                mol.AddAtom(SEQC.AtomFactory.Create(EnumAtom(zmat_in.atoms{atomi}.z), atomi, xyz));
+                mol.AddAtom(SEQC.AtomFactory.Create(SEQC.EnumAtom(zmat_in.atoms{atomi}.z), atomi, xyz));
             end
             mol.CalcBasics();
             mol.AddParamPoolsIntoManager(paramManager);

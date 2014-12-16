@@ -3,20 +3,29 @@ classdef Cndo2 < handle
     properties (SetAccess = protected)
         
         environmentFieldStrengths = zeros(3,1); % external field used in SCF
-        
         converged;
         
-        enableAtomTypes = {};
         molecule;
         theory;
-
-        coreRepulsionEnergy;
-        coreEpcCoulombEnergy;
-        vdWCorrectionEnergy;
-        matrixCISdimension;
+        coreRepulsionEnergy = 0;
+        electronicTransitionDipoleMoments;
+        energiesMO;
+        
+    end
+    
+    properties (Access = protected)
+        
+        enableAtomTypes = {};
+        
+        coreEpcCoulombEnergy = 0;
+        vdWCorrectionEnergy = 0;
+        matrixCISdimension = 0;
+        
+        gammaAB;
+        
         h1Matrix;
         fockMatrix;
-        energiesMO;
+        cartesianMatrix; % cartesian matrix represented by AOs
         orbitalElectronPopulation; %P_{\mu\nu} of (2.50) in J. A. Pople book.
         orbitalElectronPopulationCIS;
         atomicElectronPopulation; %P_{AB} of (3.21) in J. A. Pople book.
@@ -25,7 +34,7 @@ classdef Cndo2 < handle
         overlapAOs; % overlap integral between AOs
         twoElecsTwoAtomCores;
         twoElecsAtomEpcCores;
-        cartesianMatrix; % cartesian matrix represented by AOs
+        
         
         % Diagnonal terms are electronic dipole moments of each eigenstates
         % (i.e. electronicDipole[0,0,XAxis] is the x-component of the electronic
@@ -34,7 +43,7 @@ classdef Cndo2 < handle
         % Off-diagonal terms are transition dipole moments between eigenstates
         % (i.e. electronicDipole[10,0,XAxis] is the x-component of the transition
         % dipole moment from the ground state to 10-th excited state.).
-        electronicTransitionDipoleMoments;
+        
         
         coreDipoleMoment; % dipole moment of configuration.
         normalForceConstants; % force constants of normal modes
@@ -67,11 +76,14 @@ classdef Cndo2 < handle
     
     properties (SetAccess = private)
         
-        elecSCFEnergy;
-        bondingAdjustParameterK = zeros(2,1); %see (3.79) in J. A. Pople book
-        gammaAB;
-        enableAtomTypesVdW = {};
+        elecSCFEnergy = 0;
         
+    end
+    
+    properties (Access = private)
+        
+        bondingAdjustParameterK = [1; 0.75]; %see (3.79) in J. A. Pople book
+        enableAtomTypesVdW = {};
         ReducedOverlapAOsParameters_Z;
         ReducedOverlapAOsParameters_Y;
    
@@ -81,41 +93,11 @@ classdef Cndo2 < handle
         
         function obj = Cndo2()
             %protected variables
-            obj.molecule = [];
             obj.theory = SEQC.EnumTheory.CNDO2;
-            obj.coreRepulsionEnergy  = 0.0;
-            obj.coreEpcCoulombEnergy = 0.0;
-            obj.vdWCorrectionEnergy  = 0.0;
-            obj.matrixCISdimension   = 0;
-            obj.fockMatrix = [];
-            obj.energiesMO = [];
-            obj.orbitalElectronPopulation    = [];
-            obj.orbitalElectronPopulationCIS = [];
-            obj.atomicElectronPopulation     = [];
-            obj.atomicElectronPopulationCIS  = [];
-            obj.atomicUnpairedPopulationCIS  = [];
-            obj.overlapAOs                   = [];
-            obj.twoElecsTwoAtomCores         = [];
-            obj.twoElecsAtomEpcCores         = [];
-            obj.cartesianMatrix              = [];
-            obj.electronicTransitionDipoleMoments = [];
-            obj.coreDipoleMoment             = [];
-            obj.normalForceConstants         = [];
-            obj.normalModes                  = [];
-            obj.matrixCIS                    = [];
-            obj.excitedEnergies              = [];
-            obj.freeExcitonEnergiesCIS       = [];
-            obj.matrixForce                  = [];
             
             %protected methods
             obj.SetEnableAtomTypes();
             obj.SetEnableAtomTypesVdW();
-            
-            %private variables
-            obj.elecSCFEnergy = 0.0;
-            obj.bondingAdjustParameterK(1) = 1.000; %see (3.79) in J. A. Pople book
-            obj.bondingAdjustParameterK(2) = 0.750; %see (3.79) in J. A. Pople book
-            obj.gammaAB = [];
             
             % ReducedOverlapAOsParameters nested class stuff
             obj.LoadZ();
@@ -510,51 +492,6 @@ classdef Cndo2 < handle
 
         end
         
-        function value = GetReducedOverlapAOs(obj, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
-            if(nargin == 8)
-                na = arg1;
-                la = arg2;
-                m = arg3;
-                nb = arg4;
-                lb = arg5;
-                alpha = arg6;
-                beta = arg7;
-                value = 0.0;
-%                 I = 2*double(EnumShell.ShellType_end)-1;
-%                 J = 2*double(EnumShell.ShellType_end)-1;
-                I = 9;
-                J = 9;
-                for i = 0:I-1
-                    for j = 0:J-1
-                        temp = obj.ReducedOverlapAOsParameters_Y(na+1,nb+1,la+1,lb+1,m+1,i+1,j+1);
-                        if(0<abs(temp))
-                            temp = temp .* obj.GetAuxiliaryA(i+1, 0.5*(alpha+beta));
-                            temp = temp .* obj.GetAuxiliaryB(j+1, 0.5*(alpha-beta));
-                            value = value + temp;
-                        end
-                    end
-                end
-                value = value .* obj.GetAuxiliaryD(la, lb, m);
-            elseif(nargin == 5)
-                na = arg1;
-                nb = arg2;
-                alpha = arg3;
-                beta = arg4;
-                value = 0.0;
-                for k = 0:na+nb
-                    temp = obj.ReducedOverlapAOsParameters_Z(na+1,nb+1,k+1);
-                    if(0<abs(temp))
-                        temp = temp .* obj.GetAuxiliaryA(k+1, 0.5*(alpha+beta));
-                        temp = temp .* obj.GetAuxiliaryB(na+nb-k+1, 0.5*(alpha-beta));
-                        value = value + temp;
-                    end
-                end
-                value = value .* 0.5;
-            else
-                throw(MException('Cndo2:GetReducedOverlapAOs', 'Input argument number wrong.'));
-            end
-        end
-        
         % vectorized
         function value = GetReducedOverlapAOsZ(obj, na, nb, alpha, beta)
             auxAVec = zeros(na+nb+1,1);
@@ -820,8 +757,6 @@ classdef Cndo2 < handle
                         for l = 1:2*nb
                             temp = l;
                             temp = temp .* power(2.0*orbitalExponentB, 2*nb-l);
-%                             temp = temp .* SEQC.CachedFactorial(2*na+2*nb-l-1);
-%                             temp = temp ./ SEQC.CachedFactorial(2*nb-l);
                             temp = temp .* prod(2*nb-l+1:2*na+2*nb-l-1);
                             temp = temp ./ (2.0*nb);
                             temp = temp ./ power( 2.0*orbitalExponentA + 2.0*orbitalExponentB, 2.0*(na+nb)-l );
@@ -883,8 +818,6 @@ classdef Cndo2 < handle
             % full G
             fullG = fullG + diag(diagG);
         end
-        
-        %    void TransposeFockMatrixMatrix(double** transposedFockMatrix) const;
         
         function diatomicOverlapAOs = CalcDiatomicOverlapAOsInDiatomicFrame(obj, atomA, atomB)
             na = double(atomA.valenceShellType);
@@ -948,7 +881,7 @@ classdef Cndo2 < handle
                         alpha = orbitalExponentA * R;
                         beta =  orbitalExponentB * R;
                         
-                        reducedOverlapAOs = obj.GetReducedOverlapAOs(na, realShpericalHarmonicsA.l, m,...
+                        reducedOverlapAOs = obj.GetReducedOverlapAOsY(na, realShpericalHarmonicsA.l, m,...
                             nb, realShpericalHarmonicsB.l, alpha, beta);
                         reducedOverlapAOs1stDerivAlpha = obj.GetReducedOverlapAOs1stDerivativeAlpha(...
                             na, ...
@@ -1008,7 +941,7 @@ classdef Cndo2 < handle
                         alpha = orbitalExponentA * R;
                         beta =  orbitalExponentB * R;
                         
-                        reducedOverlapAOs = obj.GetReducedOverlapAOs(na,...
+                        reducedOverlapAOs = obj.GetReducedOverlapAOsY(na,...
                             realShpericalHarmonicsA.l,...
                             m,...
                             nb,...
