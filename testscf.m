@@ -20,7 +20,7 @@ mol.AddAtom(h4);
 mol.AddAtom(h5);
 mol.CalcBasics();
 
-model = Cndo2();
+model = TheoryFactory.Create(EnumTheory.CNDO2);
 model.SetMolecule(mol);
 
 tic
@@ -71,7 +71,7 @@ mol.AddAtom(h4);
 mol.AddAtom(h5);
 mol.CalcBasics();
 
-model = Indo();
+model = TheoryFactory.Create(EnumTheory.INDO);
 model.SetMolecule(mol);
 
 tic
@@ -123,7 +123,7 @@ mol.AddAtom(h4);
 mol.AddAtom(h5);
 mol.CalcBasics();
 
-model = Mndo();
+model = TheoryFactory.Create(EnumTheory.MNDO);
 model.SetMolecule(mol);
 
 tic
@@ -160,7 +160,7 @@ end
 %%
 disp('Begin am1 tests');
 
-model = Am1();
+model = TheoryFactory.Create(EnumTheory.AM1);
 model.SetMolecule(mol);
 
 tic
@@ -198,7 +198,7 @@ end
 %%
 disp('Begin pm3 tests');
 
-model = Pm3();
+model = TheoryFactory.Create(EnumTheory.PM3);
 model.SetMolecule(mol);
 
 tic
