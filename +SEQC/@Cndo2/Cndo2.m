@@ -217,6 +217,16 @@ classdef Cndo2 < handle
             obj.environmentFieldStrengths = environmentFieldStrengths;
         end
         
+        function envFieldEnergy = EnvironmentFieldEnergy(obj)
+            fieldMatrix ...
+                = obj.cartesianMatrix(:,:,1).*obj.environmentFieldStrengths(1) ...
+                + obj.cartesianMatrix(:,:,2).*obj.environmentFieldStrengths(2) ...
+                + obj.cartesianMatrix(:,:,3).*obj.environmentFieldStrengths(3);
+            envFieldEnergy ...
+                = reshape(fieldMatrix, 1, []) ...
+                * reshape(obj.orbitalElectronPopulation, [], 1);
+        end
+        
         function DoSCF(obj)
             
             diisNumErrorVect = SEQC.Arguments.GetInstance().diisNumErrorVectSCF;
