@@ -97,11 +97,14 @@ classdef Error < handle
         end
         
         function UpdateLowLevelEnergyPool(obj)
-            for iLow = 1:length(obj.lowLevelCell)
-                obj.lowLevelCell{iLow}.DoSCF();
-                obj.lowLevelEnergyPool(iLow, :) = ...
-                    obj.EnergyColumnFromOneModel(obj.lowLevelCell{iLow});
+            lowLevelCell_ = obj.lowLevelCell;
+            lowLevelEnergyPool_ = zeros(size(obj.lowLevelEnergyPool));
+            parfor iLow = 1:length(obj.lowLevelCell)
+                model = lowLevelCell_{iLow};
+                model.DoSCF();
+                lowLevelEnergyPool_(iLow, :) = obj.EnergyColumnFromOneModel(model);
             end
+            obj.lowLevelEnergyPool = lowLevelEnergyPool_;
         end
         
         function column = AbsoluteErrorColumn(obj, index)

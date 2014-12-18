@@ -1,21 +1,21 @@
-classdef (Sealed) ParamPoolManagerPm3 < SEQC.ParamPoolManagerBase
+classdef (Sealed) ParamPoolManagerAm1 < FITSEQC.ParamPoolManagerBase
     
     methods (Access = protected)
         
         function res = ParamsLengthOfAPool(~, paramPool)
-            res = length(paramPool.pm3ValidParams);
+            res = length(paramPool.am1ValidParams);
         end
         
         function res = GetIthPoolParams(obj, i)
-            res = obj.paramPoolsVec{i}.GetPm3Params();
+            res = obj.paramPoolsVec{i}.GetAm1Params();
         end
         
         function SetIthPoolParams(obj, i, ithPoolParams)
-            obj.paramPoolsVec{i}.SetPm3Params(ithPoolParams);
+            obj.paramPoolsVec{i}.SetAm1Params(ithPoolParams);
         end
         
         % private constructor
-        function obj = ParamPoolManagerPm3()
+        function obj = ParamPoolManagerAm1()
         end
         
     end
@@ -25,7 +25,7 @@ classdef (Sealed) ParamPoolManagerPm3 < SEQC.ParamPoolManagerBase
         function singleObj = GetInstance()
             persistent localObj
             if isempty(localObj) || ~isvalid(localObj)
-                localObj = SEQC.ParamPoolManagerPm3();
+                localObj = FITSEQC.ParamPoolManagerAm1();
             end
             singleObj = localObj;
         end
