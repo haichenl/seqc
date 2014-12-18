@@ -163,10 +163,10 @@ classdef Mndo < SEQC.Cndo2
                 for B = 1:A-1
                     valLengthB = obj.atomValLength(B);
                     indScaleB = obj.atomAOinds{B};
+                    linedDens = reshape(obj.orbitalElectronPopulation(indScaleB,indScaleA),[],1);
                     twoElecsCache_ = obj.twoElecsCache1{A,B};
-                    linedDens = reshape(obj.orbitalElectronPopulation(indScaleA,indScaleB)',[],1);
                     twoElecsCache_ = twoElecsCache_(1:length(linedDens), 1:length(linedDens));
-                    marginG(indScaleB, indScaleA) = marginG(indScaleB, indScaleA) - 0.5 .* reshape(twoElecsCache_ * linedDens, valLengthB, valLengthA);
+                    marginG(indScaleB, indScaleA) = - 0.5 .* reshape(twoElecsCache_ * linedDens, valLengthB, valLengthA);
                 end
             end
             marginG = triu(marginG, +1);
