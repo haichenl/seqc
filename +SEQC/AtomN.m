@@ -12,7 +12,7 @@ classdef AtomN < SEQC.Atom
     methods (Access = protected)
         
         function SetAtomicParameters(obj)
-            import SEQC.Arguments SEQC.RealSphericalHarmonicsIndex SEQC.ParamPoolC SEQC.EnumAtom;
+            import SEQC.Arguments SEQC.RealSphericalHarmonicsIndex SEQC.ParamPoolN SEQC.EnumAtom;
             
             obj.atomType = uint8(EnumAtom.N);
             obj.atomicMass = 14.00674*Arguments.GetInstance().GetGMolin2AU();

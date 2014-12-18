@@ -4,8 +4,8 @@ classdef ParamPoolManagerFactory < handle
         
         function paramPoolManager = GetManagerInstance(theoryType)
             import SEQC.EnumTheory SEQC.ParamPoolManagerCndo2 ...
-                SEQC.ParamPoolManagerIndo SEQC.ParamPoolManagerMNDO ...
-                SEQC.ParamPoolManagerAM1 SEQC.ParamPoolManagerPM3;
+                SEQC.ParamPoolManagerIndo SEQC.ParamPoolManagerMndo ...
+                SEQC.ParamPoolManagerAm1 SEQC.ParamPoolManagerPm3;
             
             if(theoryType == EnumTheory.CNDO2)
                 paramPoolManager = ParamPoolManagerCndo2.GetInstance();
