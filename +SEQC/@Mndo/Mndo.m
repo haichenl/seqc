@@ -177,17 +177,20 @@ classdef Mndo < SEQC.Cndo2
             centerG = (1.5.*obj.nddoExchangeMat - 0.5.*obj.nddoCoulombMat) .* obj.orbitalElectronPopulation;
             centerG = centerG - diag(diag(centerG)) + diag(diagG);
             
+            linedDensBCache = cell(1, obj.natom);
+            for B = 1:obj.natom
+                indScaleB = obj.atomAOinds{B};
+                linedDensBCache{B} = reshape(obj.orbitalElectronPopulation(indScaleB,indScaleB),[],1);
+            end
+            
             for A = 1:obj.natom
                 valLengthA = obj.atomValLength(A);
                 temp = zeros(valLengthA^2, 1);
-                for B = 1:obj.natom
-                    indScaleB = obj.atomAOinds{B};
-                    if(B ~= A)
-                        linedDens = reshape(obj.orbitalElectronPopulation(indScaleB,indScaleB),[],1);
-                        twoElecsMat = obj.twoElecsCache2{A,B};
-                        twoElecsMat = twoElecsMat(:,1:length(linedDens));
-                        temp = temp + twoElecsMat * linedDens;
-                    end
+                for B = [1:A-1 A+1:obj.natom]
+                    linedDens = linedDensBCache{B};
+                    twoElecsMat = obj.twoElecsCache2{A,B};
+                    twoElecsMat = twoElecsMat(:,1:length(linedDens));
+                    temp = temp + twoElecsMat * linedDens;
                 end
                 ind = obj.atomAOinds{A};
                 centerG(ind, ind) = centerG(ind, ind) + reshape(temp,valLengthA,valLengthA);
