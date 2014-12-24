@@ -227,7 +227,7 @@ classdef Cndo2 < handle
                 * reshape(obj.orbitalElectronPopulation, [], 1);
         end
         
-        function iterationStep = DoSCF(obj)
+        function DoSCF(obj)
             
             % calculate electron integral
             obj.gammaAB = obj.CalcGammaAB();
