@@ -176,7 +176,7 @@ classdef (Sealed) Arguments < handle
             obj.currentTheory = SEQC.EnumTheory.CNDO2;
             % SCF
             obj.thresholdSCF        = 1.0e-8;
-            obj.maxIterationsSCF    = 100;
+            obj.maxIterationsSCF    = 500;
             obj.dampingThreshSCF    = 1.0;
             obj.dampingWeightSCF    = 0.8;
             obj.diisNumErrorVectSCF = 5;

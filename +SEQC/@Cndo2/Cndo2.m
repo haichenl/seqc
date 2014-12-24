@@ -227,15 +227,7 @@ classdef Cndo2 < handle
                 * reshape(obj.orbitalElectronPopulation, [], 1);
         end
         
-        function DoSCF(obj)
-            
-            diisNumErrorVect = SEQC.Arguments.GetInstance().diisNumErrorVectSCF;
-            if(0<diisNumErrorVect)
-                diisStoredDensityMatrix = zeros(obj.molecule.totalNumberAOs()* obj.molecule.totalNumberAOs, diisNumErrorVect);
-                diisStoredErrorVect = zeros(obj.molecule.totalNumberAOs* obj.molecule.totalNumberAOs, diisNumErrorVect);
-                diisErrorProducts = zeros(diisNumErrorVect+1);
-                diisErrorCoefficients = zeros(diisNumErrorVect+1, 1);
-            end
+        function iterationStep = DoSCF(obj)
             
             % calculate electron integral
             obj.gammaAB = obj.CalcGammaAB();
@@ -248,20 +240,31 @@ classdef Cndo2 < handle
             % SCF
             % 0th iter
             obj.fockMatrix = obj.GetGuessH1();
-            obj.DiagonalizeFock();
+            
+            cdiis = SEQC.CDIIS(eye(size(obj.overlapAOs)));
+            adiis = SEQC.ADIIS(obj.fockMatrix);
             
             maxIterationsSCF = SEQC.Arguments.GetInstance().maxIterationsSCF;
             for iterationStep = 1:maxIterationsSCF
-                obj.atomicElectronPopulation = obj.CalcAtomicElectronPopulation();
+                % diagonalization of the Fock matrix
                 oldOrbitalElectronPopulation = obj.orbitalElectronPopulation;
+                obj.DiagonalizeFock();
+                
+                obj.atomicElectronPopulation = obj.CalcAtomicElectronPopulation();
                 
                 obj.fockMatrix = obj.h1Matrix + obj.GetG() ...
                     + obj.cartesianMatrix(:,:,1).*obj.environmentFieldStrengths(1) ...
                     + obj.cartesianMatrix(:,:,2).*obj.environmentFieldStrengths(2) ...
                     + obj.cartesianMatrix(:,:,3).*obj.environmentFieldStrengths(3);
                 
-                % diagonalization of the Fock matrix
-                obj.DiagonalizeFock();
+                % diis extropolate Fock matrix
+                cdiis.Push(obj.fockMatrix, obj.orbitalElectronPopulation); % density must be idempotent
+                adiis.Push(obj.fockMatrix, obj.orbitalElectronPopulation); % Fock must be built from idempotent density
+                if(cdiis.IAmBetter())
+                    obj.fockMatrix = reshape(cdiis.Extrapolate(), size(obj.fockMatrix));
+                else
+                    obj.fockMatrix = reshape(adiis.Interpolate(), size(obj.fockMatrix));
+                end
                 
 %                 disp(['iter', num2str(iterationStep)]);
                 
@@ -273,25 +276,8 @@ classdef Cndo2 < handle
                     obj.converged = 1;
                     obj.CalcSCFProperties();
                     break;
-                else
-                    [obj.orbitalElectronPopulation, ...
-                        diisStoredDensityMatrix,...
-                        diisStoredErrorVect,...
-                        diisErrorProducts,...
-                        diisErrorCoefficients] = obj.DoDIIS(obj.orbitalElectronPopulation,...
-                        oldOrbitalElectronPopulation,...
-                        diisStoredDensityMatrix,...
-                        diisStoredErrorVect,...
-                        diisErrorProducts,...
-                        diisErrorCoefficients,...
-                        diisNumErrorVect,...
-                        iterationStep);
-                    %                obj.DoDamp(rmsDensity,
-                    %                             hasAppliedDamping,
-                    %                             obj.orbitalElectronPopulation,
-                    %                             oldOrbitalElectronPopulation,
-                    %                             *obj.molecule);
                 end
+                
                 
                 % SCF fails
                 if(iterationStep==maxIterationsSCF-1)
