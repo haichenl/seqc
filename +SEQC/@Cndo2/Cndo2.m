@@ -235,7 +235,10 @@ classdef Cndo2 < handle
             obj.CalcTwoElecsTwoCores();
             obj.Preiterations();
             obj.cartesianMatrix = obj.CalcCartesianMatrixByGTOExpansion(uint8(SEQC.EnumSTOnG.STO6G));
-            obj.h1Matrix = obj.GetH1();
+            obj.h1Matrix = obj.GetH1() ...
+                + obj.cartesianMatrix(:,:,1).*obj.environmentFieldStrengths(1) ...
+                + obj.cartesianMatrix(:,:,2).*obj.environmentFieldStrengths(2) ...
+                + obj.cartesianMatrix(:,:,3).*obj.environmentFieldStrengths(3);
             
             % SCF
             % 0th iter
@@ -252,10 +255,7 @@ classdef Cndo2 < handle
                 
                 obj.atomicElectronPopulation = obj.CalcAtomicElectronPopulation();
                 
-                obj.fockMatrix = obj.h1Matrix + obj.GetG() ...
-                    + obj.cartesianMatrix(:,:,1).*obj.environmentFieldStrengths(1) ...
-                    + obj.cartesianMatrix(:,:,2).*obj.environmentFieldStrengths(2) ...
-                    + obj.cartesianMatrix(:,:,3).*obj.environmentFieldStrengths(3);
+                obj.fockMatrix = obj.h1Matrix + obj.GetG();
                 
                 % diis extropolate Fock matrix
                 cdiis.Push(obj.fockMatrix, obj.orbitalElectronPopulation); % density must be idempotent
